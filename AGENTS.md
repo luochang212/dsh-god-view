@@ -203,6 +203,15 @@ Reloading:
 - Keep README.md, README.en.md, and docs/protocol.md in sync with behavior. If you remove a concept, remove its docs and tests in the same change.
 - Chinese UI labels and English fallbacks are required. Use the L() helper.
 
+## UI conventions
+
+- Type uses the --pt-fs-\* tokens; do not add one-off 11.5/12.5/13.5 sizes for new UI.
+- Spacing uses the --pt-gap-\* tokens; keep section, row, and rail rhythm consistent.
+- Any name, path, focus, or meta line that can overflow must be single-line ellipsized with a title or accessible tooltip. Do not let a row reflow or grow unpredictably.
+- Action buttons are 30px high, use icon + label by default, and have a visible :focus-visible ring. Icon-only actions need an aria-label and title.
+- Section and rail headers use the shared Icon component; status dots use one vocabulary; active dots may pulse only with a prefers-reduced-motion off switch.
+- Keep the project rail and session rows stable in height; text length must not change the layout of neighboring rows.
+
 ## Definition of done
 
 Before reporting completion:

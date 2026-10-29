@@ -93,6 +93,8 @@ One read-only screen, split into a master-detail layout:
 - **Detail pane (right)**: project path, sessions, claim Gantt, and a collapsible exact-time event list. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary.
 - **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; Refresh is the only action button.
 
+UI rules: type and spacing use one shared scale; any name, path, or focus that can overflow is single-line ellipsized with the full value in a title/tooltip; action buttons are 30px high and prefer icon + label; status dots, groups, and section headers share one vocabulary.
+
 On narrow screens the project rail becomes a horizontal scrollable list above the detail pane.
 
 ## 🚀 Quick start
