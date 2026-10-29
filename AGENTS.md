@@ -151,7 +151,7 @@ Profile row:
 
 ```yaml
 - insert:
-    - id: parallel
+    - id: dsh-parallel
       name: dsh-parallel
       config:
         heartbeatMs: 15000

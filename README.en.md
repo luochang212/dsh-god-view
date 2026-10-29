@@ -111,7 +111,7 @@ Append this to $PROFILE/cordis.patch.yml:
 
 ```yaml
 - insert:
-    - id: parallel
+    - id: dsh-parallel
       name: dsh-parallel
       config:
         heartbeatMs: 15000

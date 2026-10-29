@@ -3,7 +3,7 @@
 # 2. Append this row to <profile>/cordis.patch.yml.
 # 3. Reload the profile; refresh the page to load the browser half.
 - insert:
-    - id: parallel
+    - id: dsh-parallel
       name: dsh-parallel
       config:
         # Optional. Empty means each session uses its own cwd/repo board.
