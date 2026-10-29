@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * dsh-team: dependency-free CLI for the repo-local parallel-agent board.
+ * dsh-parallel: dependency-free CLI for the repo-local parallel-agent board.
  *
  * The CLI and the DSH plugin use the same files: presence, claims, changes,
  * and the claim/release timeline.
@@ -79,13 +79,13 @@ function parse(argv) {
 }
 
 function repoRoot(opts) {
-  const start = opts.repo || process.env.TEAM_REPO || process.cwd();
-  return resolveRepoRoot(start, opts.root || process.env.TEAM_ROOT);
+  const start = opts.repo || process.env.DSH_PARALLEL_REPO || process.cwd();
+  return resolveRepoRoot(start, opts.root || process.env.DSH_PARALLEL_ROOT);
 }
 
 function agentId(opts) {
-  const id = opts.id || process.env.TEAM_AGENT_ID;
-  if (!id) throw new Error('missing --id (or set TEAM_AGENT_ID)');
+  const id = opts.id || process.env.DSH_PARALLEL_AGENT_ID;
+  if (!id) throw new Error('missing --id (or set DSH_PARALLEL_AGENT_ID)');
   return id;
 }
 
@@ -117,19 +117,19 @@ function printAgents(agents) {
 function commandHelp() {
   console.log(
     [
-      'dsh-team - minimal repo-local board for parallel agents',
+      'dsh-parallel - minimal repo-local board for parallel agents',
       '',
       'Usage:',
-      '  dsh-team join   [--name NAME] [--id ID] [--focus TEXT] [--role ROLE]',
-      '  dsh-team status --id ID [--status active|idle|blocked|done] [--focus TEXT] [--plan TEXT]',
-      '  dsh-team leave  --id ID',
-      '  dsh-team list   [--json] [--stale]',
-      '  dsh-team claim  --id ID --paths FILE [--paths FILE2] [--mode edit|review] [--reason TEXT]',
-      '  dsh-team release --id ID --paths FILE [--force]',
-      '  dsh-team claims [--json]',
-      '  dsh-team changes [--json]',
+      '  dsh-parallel join   [--name NAME] [--id ID] [--focus TEXT] [--role ROLE]',
+      '  dsh-parallel status --id ID [--status active|idle|blocked|done] [--focus TEXT] [--plan TEXT]',
+      '  dsh-parallel leave  --id ID',
+      '  dsh-parallel list   [--json] [--stale]',
+      '  dsh-parallel claim  --id ID --paths FILE [--paths FILE2] [--mode edit|review] [--reason TEXT]',
+      '  dsh-parallel release --id ID --paths FILE [--force]',
+      '  dsh-parallel claims [--json]',
+      '  dsh-parallel changes [--json]',
       '',
-      'Global: --repo DIR (defaults cwd) or TEAM_REPO. Agent id: --id or TEAM_AGENT_ID.',
+      'Global: --repo DIR (defaults cwd) or DSH_PARALLEL_REPO. Agent id: --id or DSH_PARALLEL_AGENT_ID.',
       'Presence is a one-line focus. Claims are leases; changes keep a claim/release timeline.',
     ].join('\n'),
   );
@@ -169,8 +169,8 @@ async function main() {
         sessionId: opts.session,
       });
       console.log('joined as ' + agent.name + ' (' + agent.id + ')');
-      console.log('export TEAM_AGENT_ID=' + agent.id);
-      console.log('export TEAM_REPO=' + JSON.stringify(root));
+      console.log('export DSH_PARALLEL_AGENT_ID=' + agent.id);
+      console.log('export DSH_PARALLEL_REPO=' + JSON.stringify(root));
       if (opts.json) console.log(JSON.stringify(agent, null, 2));
       break;
     }

@@ -140,7 +140,7 @@ S.registerProject(registry, { root: second });
 const server = http.createServer((req, res) => httpHandler(req, res));
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const { port } = server.address();
-const base = 'http://127.0.0.1:' + port + '/plugins/dsh-parallel-team/api';
+const base = 'http://127.0.0.1:' + port + '/plugins/dsh-parallel/api';
 let response = await fetch(base + '/projects');
 assert.equal(response.status, 200);
 let projects = await response.json();

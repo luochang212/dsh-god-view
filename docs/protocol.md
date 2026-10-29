@@ -27,7 +27,7 @@ A board is always repository-local. The index only lists roots; it never merges 
 {
   "protocol": 3,
   "id": "dsh-demo-agent",
-  "name": "parallel-team builder",
+  "name": "parallel builder",
   "sessionId": "session-demo-0001",
   "sessionTitle": "DSH 多 agent 协作插件设计",
   "parentId": null,
@@ -54,7 +54,7 @@ Claim file:
   "protocol": 3,
   "path": "lib/store.js",
   "agent": "dsh-demo-agent",
-  "agentName": "parallel-team builder",
+  "agentName": "parallel builder",
   "changeId": "ch-mvtntlri-ebc66424",
   "sessionId": "session-demo-0001",
   "sessionTitle": "DSH 多 agent 协作插件设计",
@@ -74,7 +74,7 @@ Change file:
   "protocol": 3,
   "id": "ch-mvtntlri-ebc66424",
   "agent": "dsh-demo-agent",
-  "agentName": "parallel-team builder",
+  "agentName": "parallel builder",
   "sessionId": "session-demo-0001",
   "sessionTitle": "DSH 多 agent 协作插件设计",
   "intent": "timeline: claim/release observability",
@@ -89,7 +89,7 @@ Change file:
       "type": "claim",
       "at": 1793280396000,
       "agent": "dsh-demo-agent",
-      "agentName": "parallel-team builder",
+      "agentName": "parallel builder",
       "path": "lib/client.js",
       "intent": "timeline: claim/release observability"
     },
@@ -97,7 +97,7 @@ Change file:
       "type": "release",
       "at": 1793280399000,
       "agent": "dsh-demo-agent",
-      "agentName": "parallel-team builder",
+      "agentName": "parallel builder",
       "path": "lib/client.js",
       "summary": "turn ended"
     }

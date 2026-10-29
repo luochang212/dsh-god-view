@@ -35,7 +35,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 | lib/store.js              | Shared file format and all local persistence. Source of truth for presence, claims, changes, timeline, project summaries, global registry. |
 | lib/index.js              | DSH host plugin. Lifecycle, tools, write guard, prompt context, HTTP routes, project discovery.                                            |
 | lib/client.js             | Browser bundle loaded through window.**ModuleLoader**. Read-only project rail, sessions, Gantt, details.                                   |
-| bin/team.mjs              | Dependency-free CLI over the same store.                                                                                                   |
+| bin/dsh-parallel.mjs      | Dependency-free CLI over the same store.                                                                                                   |
 | test/store.test.mjs       | Store, timeline, registry, concurrency, CLI tests.                                                                                         |
 | test/host-smoke.mjs       | Host lifecycle, tools, write guard, projects endpoint.                                                                                     |
 | test/ui-flow.cjs          | Read-only assertions and screenshots against the running desktop host.                                                                     |
@@ -122,7 +122,7 @@ node test/ui-shot.cjs                     # write ignored screenshots/local/01-p
 Syntax check before finishing:
 
 ```sh
-for f in lib/store.js lib/index.js lib/client.js bin/team.mjs test/store.test.mjs test/host-smoke.mjs; do node --check "$f"; done
+for f in lib/store.js lib/index.js lib/client.js bin/dsh-parallel.mjs test/store.test.mjs test/host-smoke.mjs; do node --check "$f"; done
 ```
 
 The UI tests assume the desktop DSH GUI is already running at the configured URL, Playwright is available through the machine-level node_modules, and the desktop auth cookie is available. The helper scripts handle that environment; do not hardcode secrets into documentation or source.
@@ -144,15 +144,15 @@ Typical profile install:
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel-team"
+ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel"
 ```
 
 Profile row:
 
 ```yaml
 - insert:
-    - id: parallel-team
-      name: dsh-parallel-team
+    - id: parallel
+      name: dsh-parallel
       config:
         heartbeatMs: 15000
         ttlMs: 60000
@@ -188,7 +188,7 @@ Reloading:
 - Protocol changes are breaking. If a file shape or route changes incompatibly, bump PROTOCOL and update README, docs/protocol.md, tests, and the migration section.
 - Protocol 2 boards may still exist. Old messages are ignored and can be deleted. Presence/claim/change files without timelines get a fallback timeline from createdAt/releasedAt.
 - The global registry is capped at 200 entries. Clean up demo roots rather than leaving fake projects in it.
-- Do not leave active claims after verification. Run node bin/team.mjs claims and release what you created.
+- Do not leave active claims after verification. Run node bin/dsh-parallel.mjs claims and release what you created.
 - Do not put volatile live state (current PIDs, session ids, claim counts) into README or AGENTS.md.
 
 ## Editing rules
@@ -211,7 +211,7 @@ Before reporting completion:
 2. node --test test/store.test.mjs passes.
 3. node test/host-smoke.mjs passes.
 4. node test/ui-flow.cjs reports CONTROLS 0, HAS_PROJECTS true, HAS_TIMELINE true, and no console errors.
-5. node bin/team.mjs claims reports no active claims, or every remaining claim is intentional and explained.
+5. node bin/dsh-parallel.mjs claims reports no active claims, or every remaining claim is intentional and explained.
 6. Screenshots are refreshed when UI changed.
 7. README.md, README.en.md, and docs/protocol.md reflect the final behavior.
 8. No message/inbox/question code has been reintroduced.

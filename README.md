@@ -102,7 +102,7 @@ claim 是精确到文件路径的，不支持目录或 glob。
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel-team"
+ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel"
 ```
 
 ### 2. 添加插件配置
@@ -111,8 +111,8 @@ ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel-team"
 
 ```yaml
 - insert:
-    - id: parallel-team
-      name: dsh-parallel-team
+    - id: parallel
+      name: dsh-parallel
       config:
         heartbeatMs: 15000
         ttlMs: 60000
@@ -142,14 +142,14 @@ root 留空即可。每个 Agent 会按自己的 session cwd 找到对应仓库�
 CLI 与插件共用同一套文件：
 
 ```sh
-node bin/team.mjs join    --name reviewer --focus "reviewing the guard"
-node bin/team.mjs status  --id <id> --focus "reading the claim timeline"
-node bin/team.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
-node bin/team.mjs release --id <id> --paths lib/store.js --summary "done"
-node bin/team.mjs claims
-node bin/team.mjs changes
-node bin/team.mjs list
-node bin/team.mjs leave --id <id>
+node bin/dsh-parallel.mjs join    --name reviewer --focus "reviewing the guard"
+node bin/dsh-parallel.mjs status  --id <id> --focus "reading the claim timeline"
+node bin/dsh-parallel.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
+node bin/dsh-parallel.mjs release --id <id> --paths lib/store.js --summary "done"
+node bin/dsh-parallel.mjs claims
+node bin/dsh-parallel.mjs changes
+node bin/dsh-parallel.mjs list
+node bin/dsh-parallel.mjs leave --id <id>
 ```
 
 ## 📦 数据布局

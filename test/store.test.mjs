@@ -143,11 +143,11 @@ test('concurrent processes create agents and claims without corruption', async (
 
 test('CLI claim conflict and release timeline', () => {
   const root = repo();
-  const cli = path.resolve('bin/team.mjs');
+  const cli = path.resolve('bin/dsh-parallel.mjs');
   const a = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'a'], { encoding: 'utf8' });
   const b = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'b'], { encoding: 'utf8' });
-  const aid = /export TEAM_AGENT_ID=(.+)/.exec(a.stdout)[1].trim();
-  const bid = /export TEAM_AGENT_ID=(.+)/.exec(b.stdout)[1].trim();
+  const aid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(a.stdout)[1].trim();
+  const bid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(b.stdout)[1].trim();
   assert.equal(
     spawnSync(process.execPath, [cli, 'claim', '--repo', root, '--id', aid, '--paths', 'x.ts', '--intent', 'fix x'], {
       encoding: 'utf8',
@@ -175,9 +175,9 @@ test('CLI claim conflict and release timeline', () => {
 
 test('CLI status done and leave release owned claims', () => {
   const root = repo();
-  const cli = path.resolve('bin/team.mjs');
+  const cli = path.resolve('bin/dsh-parallel.mjs');
   const join = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'a'], { encoding: 'utf8' });
-  const aid = /export TEAM_AGENT_ID=(.+)/.exec(join.stdout)[1].trim();
+  const aid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(join.stdout)[1].trim();
   assert.equal(
     spawnSync(process.execPath, [cli, 'claim', '--repo', root, '--id', aid, '--paths', 'done.ts'], {
       encoding: 'utf8',
@@ -198,7 +198,7 @@ test('CLI status done and leave release owned claims', () => {
   );
 
   const joinB = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'b'], { encoding: 'utf8' });
-  const bid = /export TEAM_AGENT_ID=(.+)/.exec(joinB.stdout)[1].trim();
+  const bid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(joinB.stdout)[1].trim();
   assert.equal(
     spawnSync(process.execPath, [cli, 'claim', '--repo', root, '--id', bid, '--paths', 'left.ts'], {
       encoding: 'utf8',

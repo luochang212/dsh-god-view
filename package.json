@@ -1,5 +1,5 @@
 {
-  "name": "dsh-parallel-team",
+  "name": "dsh-parallel",
   "version": "0.3.0",
   "description": "Per-repo presence, file leases, claim/release Gantt, and a global recent-project index for parallel agents",
   "type": "module",
@@ -11,7 +11,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "dsh-team": "./bin/team.mjs"
+    "dsh-parallel": "./bin/dsh-parallel.mjs"
   },
   "dsh": {
     "client": {

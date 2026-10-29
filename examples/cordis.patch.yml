@@ -1,10 +1,10 @@
-# Add dsh-parallel-team to a DSH profile.
+# Add dsh-parallel to a DSH profile.
 # 1. Install the package into the profile (or symlink it into node_modules).
 # 2. Append this row to <profile>/cordis.patch.yml.
 # 3. Reload the profile; refresh the page to load the browser half.
 - insert:
-    - id: parallel-team
-      name: dsh-parallel-team
+    - id: parallel
+      name: dsh-parallel
       config:
         # Optional. Empty means each session uses its own cwd/repo board.
         root: ''

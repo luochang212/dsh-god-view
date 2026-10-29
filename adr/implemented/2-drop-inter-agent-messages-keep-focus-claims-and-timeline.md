@@ -5,7 +5,7 @@ description: Read before adding any message, inbox, question, reply, or human-in
 raised-by: human
 decided-by: human
 created: 2026-10-30
-paths: [lib/store.js, lib/index.js, lib/client.js, bin/team.mjs]
+paths: [lib/store.js, lib/index.js, lib/client.js, bin/dsh-parallel.mjs]
 ---
 
 # ADR: 2 Drop inter-agent messages; keep focus, claims, and timeline

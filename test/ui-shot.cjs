@@ -20,7 +20,7 @@ const fs = require('node:fs');
     execSync(
       'sqlite3 ' +
         cookieDb +
-        ' "select name from cookies where name like \'dsh-auth-%\' order by expires_utc desc limit 1"',
+        ' "select name from cookies where name like \'dsh-auth-%\' order by creation_utc desc limit 1"',
     )
       .toString()
       .trim();
@@ -32,7 +32,7 @@ const fs = require('node:fs');
   const browser = await chromium.launch({ headless: true, executablePath: chromePath });
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
   await context.addCookies([
-    { name: cookieName, value: cookieValue, domain: '127.0.0.1', path: '/', httpOnly: true, sameSite: 'Strict' },
+    { name: cookieName, value: cookieValue, url: guiUrl + '/', httpOnly: true, sameSite: 'Lax' },
   ]);
   const page = await context.newPage();
   const errors = [];
