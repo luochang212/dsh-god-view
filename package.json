@@ -1,0 +1,59 @@
+{
+  "name": "dsh-parallel-team",
+  "version": "0.3.0",
+  "description": "Per-repo presence, file leases, claim/release Gantt, and a global recent-project index for parallel agents",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./store": "./lib/store.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-team": "./bin/team.mjs"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "files": [
+    "lib/",
+    "bin/",
+    "docs/",
+    "adr/",
+    "screenshots/",
+    "README.md",
+    "README.en.md",
+    "LICENSE",
+    "AGENTS.md"
+  ],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.0 <0.3.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "adr:validate": "adrkit validate --all",
+    "check": "npm run format:check && npm run lint && npm test && node test/host-smoke.mjs && npm run adr:validate"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "adr-kit": "^0.31.0",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3"
+  }
+}

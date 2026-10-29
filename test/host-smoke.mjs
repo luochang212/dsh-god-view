@@ -1,0 +1,180 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import assert from 'node:assert/strict';
+import { apply } from '../lib/index.js';
+import * as S from '../lib/store.js';
+
+const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-host-'));
+fs.mkdirSync(path.join(repo, '.git'));
+fs.writeFileSync(path.join(repo, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+const second = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-host2-'));
+fs.mkdirSync(path.join(second, '.git'));
+fs.writeFileSync(path.join(second, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+const registry = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-reg-'));
+
+const handlers = new Map();
+const tools = new Map();
+let httpHandler;
+const webServer = {
+  host: '127.0.0.1',
+  register(route) {
+    httpHandler = route.handler;
+    return () => {
+      httpHandler = undefined;
+    };
+  },
+};
+const ctx = {
+  tools: {
+    register(definition) {
+      tools.set(definition.name, definition);
+      return () => tools.delete(definition.name);
+    },
+  },
+  effect(fn) {
+    return fn();
+  },
+  on(event, listener) {
+    const list = handlers.get(event) || [];
+    list.push(listener);
+    handlers.set(event, list);
+    return () => {};
+  },
+  get(name) {
+    return name === 'webServer' ? webServer : name === 'agents' ? { list: () => [] } : undefined;
+  },
+  inject(deps, callback) {
+    callback(ctx);
+  },
+};
+
+apply(ctx, { root: repo, registryDir: registry, heartbeatMs: 60_000, prompt: false });
+
+function emit(event, payload) {
+  for (const listener of handlers.get(event) || []) listener(payload);
+}
+
+function makeAgent(id) {
+  return {
+    session: { id, header: { cwd: repo } },
+    status: 'idle',
+    ctx: {
+      get() {
+        return undefined;
+      },
+      effect(fn) {
+        return fn();
+      },
+    },
+    inject() {},
+    followup() {},
+  };
+}
+const alice = makeAgent('session-alice-123456');
+const bob = makeAgent('session-bob-654321');
+emit('agent/created', { agent: alice });
+emit('agent/created', { agent: bob });
+const aliceId = S.agentIdForSession('session-alice-123456');
+const bobId = S.agentIdForSession('session-bob-654321');
+
+const status = tools.get('team_status');
+const roster = tools.get('team_roster');
+const claim = tools.get('team_claim');
+assert.deepEqual([...tools.keys()].sort(), ['team_claim', 'team_roster', 'team_status']);
+assert.ok(status && roster && claim);
+
+let out = await status.execute({ name: 'Alice', focus: 'wiring the panel' }, { agent: alice });
+assert.match(out.text, /Alice/);
+out = await status.execute({ name: 'Bob', focus: 'writing tests' }, { agent: bob });
+assert.match(out.text, /Alice/);
+
+out = await roster.execute({}, { agent: bob });
+assert.match(out.text, /Parallel team/);
+assert.match(out.text, /wiring the panel/);
+
+const pre = handlers.get('tools/pre-execute')[0];
+assert.ok(pre, 'pre-execute guard registered');
+const allow = { kind: 'allow' };
+let decision = await pre({ name: 'write', agent: alice, arguments: { file_path: 'src/auto.ts' } }, async () => allow);
+assert.equal(decision.kind, 'allow');
+const autoClaim = S.getClaim(repo, 'src/auto.ts');
+assert.ok(autoClaim && autoClaim.auto === true && autoClaim.agent === aliceId);
+const autoChange = S.listChanges(repo, { state: 'claimed' })[0];
+assert.ok(autoChange);
+assert.equal(autoChange.sessionId, alice.session.id);
+assert.match(autoChange.intent, /wiring the panel/);
+assert.ok(autoChange.timeline.some((event) => event.type === 'claim' && event.path === 'src/auto.ts'));
+decision = await pre({ name: 'write', agent: bob, arguments: { file_path: 'src/auto.ts' } }, async () => allow);
+assert.equal(decision.kind, 'deny');
+assert.match(decision.reason, /maintenance area/);
+emit('agent/status', { agent: alice, status: 'idle' });
+await new Promise((resolve) => setTimeout(resolve, 20));
+assert.equal(S.getClaim(repo, 'src/auto.ts'), undefined, 'auto claim released on idle');
+const releasedChange = S.listChanges(repo, { state: 'done' }).find((change) => change.id === autoChange.id);
+assert.ok(releasedChange);
+assert.equal(releasedChange.summary, 'turn ended');
+assert.ok(releasedChange.timeline.some((event) => event.type === 'release' && event.path === 'src/auto.ts'));
+decision = await pre({ name: 'write', agent: bob, arguments: { file_path: 'src/auto.ts' } }, async () => allow);
+assert.equal(decision.kind, 'allow');
+assert.equal(S.getClaim(repo, 'src/auto.ts').agent, bobId);
+S.releasePaths(repo, bobId, ['src/auto.ts']);
+
+const carol = makeAgent('session-carol-999999');
+emit('agent/created', { agent: carol });
+emit('agent/inbox/inserted', {
+  agent: carol,
+  message: {
+    source: { kind: 'user' },
+    content: [{ type: 'text', text: 'Investigate the guard race before editing. Then stop.' }],
+  },
+});
+const carolPresence = S.getAgent(repo, S.agentIdForSession('session-carol-999999'));
+assert.ok(carolPresence);
+assert.match(carolPresence.focus, /Investigate the guard race/);
+
+S.createAgent(second, { id: 'peer', name: 'Peer', focus: 'other project' });
+S.registerProject(registry, { root: second });
+
+const server = http.createServer((req, res) => httpHandler(req, res));
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+const { port } = server.address();
+const base = 'http://127.0.0.1:' + port + '/plugins/dsh-parallel-team/api';
+let response = await fetch(base + '/projects');
+assert.equal(response.status, 200);
+let projects = await response.json();
+assert.ok(projects.projects.some((project) => project.root === repo));
+assert.ok(projects.projects.some((project) => project.root === second));
+
+response = await fetch(base + '/state?root=' + encodeURIComponent(repo));
+assert.equal(response.status, 200);
+let snapshot = await response.json();
+assert.equal(snapshot.root, repo);
+assert.equal(snapshot.stats.agents, 3);
+assert.equal(snapshot.protocol, 3);
+assert.equal('messages' in snapshot, false);
+
+response = await fetch(base + '/claim', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ root: repo, agent: aliceId, paths: ['src/http.ts'], reason: 'http claim' }),
+});
+assert.equal(response.status, 200);
+const claimed = await response.json();
+assert.ok(claimed.claimed.length === 1);
+assert.ok(S.getClaim(repo, 'src/http.ts'));
+
+response = await fetch(base + '/release', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ root: repo, agent: aliceId, paths: ['src/http.ts'], reason: 'http release' }),
+});
+assert.equal(response.status, 200);
+assert.equal(S.getClaim(repo, 'src/http.ts'), undefined);
+
+const cross = await fetch(base + '/state', { headers: { origin: 'http://evil.example' } });
+assert.equal(cross.status, 403);
+
+await new Promise((resolve) => server.close(resolve));
+console.log('host v3 smoke ok', repo, S.listAgents(repo).length, tools.size);

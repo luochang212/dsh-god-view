@@ -1,0 +1,5 @@
+.dsh/parallel/
+node_modules/
+*.log
+
+screenshots/local/
