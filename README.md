@@ -5,7 +5,7 @@
 
 # Agent 协作台
 
-**dsh-parallel-team** · 多 Agent 协作看板 / DSH plugin
+**dsh-parallel** · 多 Agent 协作看板 / DSH plugin
 
 <p>
   <img src="https://img.shields.io/badge/version-0.3.0-0e7490?style=flat-square" alt="version" />
@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/DSH-plugin-0e7490?style=flat-square" alt="DSH plugin" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
-  <a href="https://github.com/luochang212/dsh-parallel-team/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-parallel-team/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/luochang212/dsh-parallel/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-parallel/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 **让同一仓库里的多个 Agent 看得见彼此，不抢同一个文件，并且留下可回看的占用时间轴。**

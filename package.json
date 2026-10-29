@@ -55,5 +55,13 @@
     "adr-kit": "^0.31.0",
     "eslint": "^9.13.0",
     "prettier": "^3.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luochang212/dsh-parallel.git"
+  },
+  "homepage": "https://github.com/luochang212/dsh-parallel#readme",
+  "bugs": {
+    "url": "https://github.com/luochang212/dsh-parallel/issues"
   }
 }
