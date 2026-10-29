@@ -89,8 +89,8 @@ The UI renders these events as a per-file Gantt chart. A bar runs from claim to 
 
 One read-only screen, split into a master-detail layout:
 
-- **Project rail (left)**: full height, sticky; recent projects with status dot, active sessions, claims, active changes, and last activity. The selected project's session and file counts sit in a footer at the bottom.
-- **Detail pane (right)**: project path, sessions, claim Gantt, and a collapsible exact-time event list.
+- **Project rail (left)**: full height, sticky; projects grouped into Active / Idle, with one shared status-dot vocabulary, active sessions, claims, active changes, and last activity. The selected project's session and file counts sit in a footer at the bottom. Active dots pulse subtly and stop under reduced-motion.
+- **Detail pane (right)**: project path, sessions, claim Gantt, and a collapsible exact-time event list. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary.
 - **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; Refresh is the only action button.
 
 On narrow screens the project rail becomes a horizontal scrollable list above the detail pane.
