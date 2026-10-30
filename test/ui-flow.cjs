@@ -133,6 +133,38 @@ const fs = require('node:fs');
     throw new Error('sidebar footer must stay at the rail bottom while the detail pane scrolls');
   if (!layout.railFullHeight) throw new Error('the project rail must reach the bottom of the panel');
   if (layout.topbarHeight !== 56) throw new Error('the topbar must render at 56px');
+  if (layout.railWidth !== 264) throw new Error('the project rail must render at 264px');
+
+  // The rail lives on the right, next to the host's own left sidebar.
+  const sides = await page.evaluate(() => {
+    const main = document.querySelector('.pt-main');
+    const side = document.querySelector('.pt-side');
+    if (!main || !side) return null;
+    return {
+      sideLeft: Math.round(side.getBoundingClientRect().left),
+      mainRight: Math.round(main.getBoundingClientRect().right),
+      toggles: document.querySelectorAll('.pt-iconbtn').length,
+    };
+  });
+  console.log('RAIL_ON_RIGHT', Boolean(sides && sides.sideLeft >= sides.mainRight - 1));
+  console.log('RAIL_TOGGLE', sides && sides.toggles);
+  if (!sides || sides.sideLeft < sides.mainRight - 1) throw new Error('the rail must sit on the right side');
+  if (sides.toggles !== 1) throw new Error('the topbar must carry exactly one rail toggle');
+
+  // Collapsing goes to zero, and the toggle restores it.
+  const toggle = page.locator('.pt-iconbtn').first();
+  const railBefore = await page.locator('.pt-side').count();
+  await toggle.click();
+  await page.waitForTimeout(400);
+  const railHidden = await page.locator('.pt-side').count();
+  const expanded = await toggle.getAttribute('aria-expanded');
+  await toggle.click();
+  await page.waitForTimeout(400);
+  const railBack = await page.locator('.pt-side').count();
+  console.log('RAIL_COLLAPSE', railBefore, railHidden, railBack, expanded);
+  if (railBefore !== 1 || railHidden !== 0 || railBack !== 1)
+    throw new Error('the rail must collapse to zero and restore');
+  if (expanded !== 'false') throw new Error('the toggle must report the collapsed state');
 
   await page.screenshot({ path: 'screenshots/local/01-panel.png', fullPage: false });
   await page.evaluate(() => document.body.setAttribute('data-ds-dark-theme', ''));

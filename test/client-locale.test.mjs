@@ -145,12 +145,11 @@ function loadPlugin({ documentLang, activeLocale, queue, fetchImpl }) {
       return rows[rows.length - 1];
     },
     panelTitle() {
-      const main = this.lastEntry('main');
-      assert.ok(main, 'main panel registered');
-      const tree = main.component();
-      const title = findByClass(tree, 'pt-title');
-      assert.ok(title, 'panel title rendered');
-      return textOf(title);
+      // The rail no longer draws a title (ADR 17); the panel's name is the
+      // label it registers with the host sidebar.
+      const entry = this.lastEntry('sidebar.panellist');
+      assert.ok(entry, 'sidebar entry registered');
+      return entry.options.label;
     },
   };
 }
@@ -178,7 +177,7 @@ test('an open panel follows a runtime locale change without a reload', () => {
   assert.equal(plugin.panelTitle(), '上帝视角');
 
   plugin.setLocale('en');
-  assert.equal(plugin.panelTitle(), "God's Eye View", 'panel re-renders in the new language');
+  assert.equal(plugin.panelTitle(), "God's Eye", 'panel re-renders in the new language');
   assert.equal(
     plugin.lastEntry('sidebar.panellist').options.label,
     "God's Eye",
@@ -481,11 +480,7 @@ test('the brand mark is the radiant eye, in the rail and on the blank page', () 
     collect(node.children);
   };
   collect(plugin.lastEntry('main').component());
-  assert.ok(marks.length > 0, 'the rail renders the brand mark');
-  const svg = marks[0].type(marks[0].props);
-  assert.equal(svg.props['data-glyph'], 'radiant-eye');
-  assert.equal(svg.children.length, 3, 'lens, pupil, rays');
-  assert.equal(svg.children[2].props.d.split('M').length - 1, 8, 'eight radiating strokes');
+  assert.equal(marks.length, 0, 'the rail carries no brand mark (ADR 17)');
 
   const empty = loadPlugin({
     documentLang: 'zh-CN',
@@ -520,12 +515,41 @@ test('the brand mark is the radiant eye, in the rail and on the blank page', () 
   collectBlank(empty.lastEntry('main').component());
   assert.deepEqual(
     blankMarks.map((mark) => mark.props.size),
-    [20, 26],
-    'rail brand mark plus the larger blank-page mark',
+    [26],
+    'the blank page keeps the mark',
   );
+  const svg = blankMarks[0].type(blankMarks[0].props);
+  assert.equal(svg.props['data-glyph'], 'radiant-eye');
+  assert.equal(svg.children.length, 3, 'lens, pupil, rays');
+  assert.equal(svg.children[2].props.d.split('M').length - 1, 8, 'eight radiating strokes');
 });
 
 test('the panel shows the Gantt without an event list', () => {
   assert.doesNotMatch(SOURCE, /TimelineSection|事件明细|Event details/);
   assert.doesNotMatch(SOURCE, /pt-tl|pt-timeline/);
+});
+
+test('the topbar carries a rail toggle next to the switch', () => {
+  const project = { root: '/repo/one', name: 'one', active: 1, working: 1, blocked: 0, claims: 1, changes: 0 };
+  const board = {
+    root: project.root,
+    projects: [project],
+    selectedRoot: project.root,
+    agents: [],
+    claims: [],
+    changes: [],
+    stats: { active: 1, working: 1, blocked: 0, claims: 1 },
+  };
+  const plugin = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [board, '', false, { enabled: true, trackedSessions: 1, roots: [] }, false],
+  });
+  plugin.exports.apply(plugin.ctx);
+  const tree = plugin.lastEntry('main').component();
+  const toggle = findByProp(tree, 'aria-controls', 'pt-rail');
+  assert.ok(toggle, 'rail toggle rendered');
+  assert.equal(toggle.props['aria-expanded'], 'true', 'the rail starts open');
+  assert.ok(findByProp(tree, 'role', 'switch'), 'the coordination switch stays in the topbar');
+  assert.ok(findByClass(tree, 'pt-side'), 'the rail renders by default');
 });

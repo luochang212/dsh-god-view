@@ -34,7 +34,7 @@ When you are about to run a team, flip the **coordination switch** in the panel 
 
 - Turning it on mid-flight is fine: files already being edited are not back-claimed, and protection starts at the next write.
 - Turning it off releases the automatic leases this host holds and freezes the history instead of deleting it.
-- It never turns itself on. If the host sees several sessions while it is off, the panel says so and waits for you.
+- It never turns itself on.
 
 ## ✨ What it solves
 
@@ -95,11 +95,11 @@ The UI renders these events as a per-file Gantt chart. A bar runs from claim to 
 
 One read-only screen rendered as a full-bleed app shell (no page padding):
 
-- **Sidebar (left, 232px, full height)**: a brand area at the top (a repo-drawn radiant-eye glyph + God's Eye View) above the Active projects navigation. A project is listed only when it has a working or blocked session, a live lease, or real activity within the last 30 minutes; an open session whose only sign of life is the host heartbeat is not active. Each row shows the status dot, working and blocked sessions, claims, active changes, and last activity. The selected project's working-session and file counts sit in a footer at the bottom. The dot breathes only while a session is working; blocked is red, claimed is amber, and a recent-but-idle board is grey. Motion stops under reduced-motion.
-- **Topbar (56px)**: the selected project's name and repository path on the left, and a single unlabeled coordination switch on the right (named for screen readers, explained on hover); the coordination-off notice is a slim strip under the topbar.
-- **Content**: scrolls independently — sessions and the claim Gantt, composed as two white cards on a faintly tinted page in light mode. Cards use the host elevation token (0.5px hairline stroke plus a soft shadow) and a 12px radius; each header sits inside its card and rows are separated by hairlines. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary; the full event record stays in the CLI (`dsh-god-view changes`).
+- **Project rail (right, 264px, full height, collapsible to zero)**: the collapse choice is kept in localStorage across reloads. The header is a 56px row aligned with the topbar (caption and count) and carries no logo or wordmark — the name already lives on the host's own sidebar entry. A project is listed only when it has a working or blocked session, a live lease, or real activity within the last 30 minutes; an open session whose only sign of life is the host heartbeat is not active. Each row shows the status dot, working and blocked sessions, claims, active changes, and last activity. The selected project's working-session and file counts sit in a footer at the bottom. The dot breathes only while a session is working; blocked is red, claimed is amber, and a recent-but-idle board is grey. Motion stops under reduced-motion.
+- **Topbar (56px)**: the selected project's name and repository path on the left; on the right the coordination switch in the host's own spec (36x20, brand colour when on, 2px focus ring) and, at the far edge, a 28x28 rail toggle with a mirrored panel icon.
+- **Content**: scrolls independently — sessions and the claim Gantt, composed as two section cards directly on the host's bg-base. Cards use the host elevation token (0.5px hairline stroke plus a soft shadow) and a 12px radius; each header sits inside its card and rows are separated by hairlines. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary; the full event record stays in the CLI (`dsh-god-view changes`).
 - **When nothing is active**: the page is one quiet blank state — a low-opacity glyph and a single line (no recent activity; projects appear once a session works here or claims a file; with coordination off it points at the switch). No empty sections, empty Gantt, or dashed placeholders, so the page can be read and left at a glance.
-- **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; the coordination slider in the topbar is the only control.
+- **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; the panel has two chrome controls only — the coordination switch (mode) and the rail toggle (layout).
 
 UI rules: type and spacing use one shared scale; any name, path, or focus that can overflow is single-line ellipsized with the full value in a title/tooltip; action buttons are 30px high and prefer icon + label; status dots, groups, and section headers share one vocabulary.
 
@@ -186,7 +186,7 @@ It stores root / name / lastSeenAt only. Presence, claims, and timelines always 
 
 ## 🧭 Decisions
 
-Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are sixteen implemented decisions:
+Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are eighteen implemented decisions:
 
 - **ADR 1**: one board per repository; the global project index only discovers and summarizes, and never introduces a cross-project lock.
 - **ADR 2**: no messages, inbox, or question queue; focus is a session property; the panel is read-only.
@@ -202,8 +202,10 @@ Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) 
 - **ADR 12**: the brand mark is a repo-drawn radiant eye (lens ring, pupil, eight rays) instead of a library eye icon.
 - **ADR 13**: the topbar carries only the coordination switch — no live indicator, no switch label.
 - **ADR 14**: no event list under the Gantt — exact times live in the bar tooltip, the full record in the CLI.
-- **ADR 15**: the content area is two section cards on a tinted page (host elevation token, in-card headers, hairline rows); the brand tile grows to 36px.
+- **ADR 15**: the content area is two section cards (host elevation token, in-card headers, hairline rows); the brand tile grows to 36px. ADR 17 later removed the page tint in favour of the host bg-base.
 - **ADR 16**: active means real activity in the last 30 minutes, a working/blocked session, or a live lease; the heartbeat only filters dead hosts and is never shown as activity.
+- **ADR 17**: the rail sits on the right, collapses to zero, and the chrome uses host tokens and the host switch spec.
+- **ADR 18**: no coordination-off banner under the topbar; the switch alone carries the state.
 
 Run **adrkit list** at task start and read the relevant implemented records. Use **adrkit relevant <path>** when a task targets specific files. Add or change decisions with **adrkit record** or **adrkit propose**, and run **adrkit validate --all** before finishing.
 

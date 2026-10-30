@@ -23,7 +23,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 - Boards are per repository. A claim in repo A must never block repo B.
 - The global project index only aggregates status. It must not merge claims, timelines, or leases across repositories.
 - There are exactly three tools: team_status, team_roster, team_claim. Adding a tool is a product decision, not a small refactor.
-- The browser panel is a two-pane master-detail layout: full-height project rail on the left, selected project detail on the right. Do not move the project list back to large cards above the Gantt.
+- The browser panel is a two-pane master-detail layout: project detail on the left, full-height project rail on the right, collapsible to zero from the topbar. The rail carries no brand block — the panel's name lives on the host sidebar entry. Do not move the project list back to large cards above the Gantt, and do not move the rail back to the left edge (the host's own sidebar is there).
 - The rail lists active boards only: a working or blocked session, a live lease, or real activity within the last 30 minutes. A session whose only sign of life is the heartbeat is not active. Idle boards are hidden; with none active the page is one quiet blank state, never empty section boxes. See [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md) and [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md).
 - The project rail footer shows the selected project's working-session and files-in-use counts. The rail must reach the bottom of the panel; do not let it float or stop after the last project row.
 - The Gantt is the only timeline surface in the panel. Exact times come from the bar tooltip; the full event record lives in the CLI. Do not add an event list under the Gantt. See [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md).
@@ -94,7 +94,7 @@ The registry is only a recent-project index. Each board remains the source of tr
 - UI language comes from the injected `locale` service (`ctx.locale.getSnapshot()` / `ctx.locale.subscribe`), never from a module-time read of `<html lang>`; see [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md). The sidebar label is registration metadata, so it is re-registered when the language changes.
 - Client code must use only browser APIs and the module loader; no Node imports.
 - There is no bundler step in this repository. A page refresh loads the latest client.js.
-- The panel is a full-bleed app shell: a 232px logo rail (brand area, project nav, footer counts), a 56px topbar (project name/path, and the switch as its only right-hand element), and one scrolling content area. The content area, not the topbar's column, is the scroll container.
+- The panel is a full-bleed app shell: a 56px topbar (project name/path, the coordination switch, the rail toggle), one scrolling content area, and a 264px rail on the right (caption, project nav, footer counts) that collapses to zero. Rail fill is `--dsw-specific-sidebar-fill`; the rail header is the same 56px as the topbar so the hairline runs across. The content area, not the topbar's column, is the scroll container.
 
 ## Architecture decisions
 
@@ -126,6 +126,8 @@ Current implemented decisions cover:
 - [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md): the Gantt is the only timeline surface; no event list under it.
 - [ADR 15](adr/implemented/15-compose-the-content-area-as-two-section-cards-on-a-tinted-page.md): the content area is section cards on a tinted page, not outlined boxes.
 - [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md): active means recent work (30 minutes), working/blocked, or a live lease; the heartbeat only filters dead hosts.
+- [ADR 17](adr/implemented/17-put-the-rail-on-the-right-collapse-it-to-zero-and-borrow-host-chrome.md): the rail sits on the right, collapses to zero, and the chrome uses host tokens and the host Switch.
+- [ADR 18](adr/implemented/18-drop-the-coordination-off-banner.md): no coordination-off banner; the switch alone carries the state.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -205,7 +207,7 @@ Reloading:
 - The project rail is full-height and fixed; the detail pane is the scroll container. The project list scrolls independently; the footer stays at the bottom of the rail, never below the viewport.
 - The rail must show status at a glance: dot, name, working/blocked/claims/change counts, last activity.
 - The rail lists only boards with a working/blocked session, a live lease, or activity within 30 minutes; a heartbeat alone is not a reason to list a board. When the selected board goes idle, selection moves to the first active board; with none, the blank page renders and the content has zero sections. Do not add a filter control, a second list, or a placeholder box to bring idle boards back.
-- The panel has exactly one control: the coordination switch. The UI test asserts one switch and zero inputs/selects/textareas.
+- The panel has exactly two controls, both chrome: the coordination switch (mode) and the rail toggle (layout). The UI test asserts one switch, one toggle, and zero inputs/selects/textareas. Never put a control inside the rail: collapsing it must not hide a decision.
 - Turning coordination off must release this host's auto leases; explicit leases are left to their owner. Never enable coordination automatically, including when a second session appears.
 - A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
 - A page refresh is required after client changes; a host reload is required after lib/index.js changes.
@@ -233,11 +235,11 @@ Reloading:
 - Spacing uses the --pt-gap-\* tokens; keep section, row, and rail rhythm consistent.
 - Any name, path, focus, or meta line that can overflow must be single-line ellipsized with a title or accessible tooltip. Do not let a row reflow or grow unpredictably.
 - Action buttons are 30px high, use icon + label by default, and have a visible :focus-visible ring. Icon-only actions need an aria-label and title.
-- The coordination switch is a slider: a button with role=switch and aria-checked, a 34x20 track and a 16px thumb. Never a checkbox input; the read-only test counts input/select/textarea and requires zero.
+- The coordination switch follows the host's own Switch: a role=switch button, 36x20, 2px padding, 999px radius, `border-l3` track, `brand-primary` when on, a 16px thumb (`switch-thumb` off, `label-primary-foreground` on) travelling 16px, and a 2px focus ring. Never a checkbox input; the read-only test counts input/select/textarea and requires zero.
 - Section and rail headers use the shared Icon component; status dots use one vocabulary. A project dot breathes only while a session is working (red blocked, amber claimed, grey recent-only), and the motion stops with a prefers-reduced-motion off switch.
 - UI labels are 会话 / 进行中 / 受阻 / 占用 / 变更, plus the umbrella 活跃项目. Never label a heartbeat or a live session as 在线 or 活跃.
-- The content area is section cards, not boxes: one card per concept with its header inside, rows divided by `border-l1` hairlines, `elevation-soft` plus a 12px radius instead of a 1px border, and the page tinted one step below the cards. Do not give individual rows their own border, radius or shadow; do not add a card where there is nothing to show (ADR 15).
-- The brand mark is the repo's own radiant eye (24x24, ring r=4.4, pupil r=1.4, eight rays r=8.2-10.6, 1.7 stroke). It is not a lucide icon; do not swap it for a library glyph without a decision record, and re-check 18-19px legibility if you change the ray count.
+- The content area is section cards, not boxes: one card per concept with its header inside, rows divided by `border-l1` hairlines, `elevation-soft` plus a 12px radius instead of a 1px border, on the host's plain `bg-base` (no hand-mixed page tint). Do not give individual rows their own border, radius or shadow; do not add a card where there is nothing to show (ADR 15, ADR 17).
+- The brand mark is the repo's own radiant eye (24x24, ring r=4.4, pupil r=1.4, eight rays r=8.2-10.6, 1.7 stroke); it appears only on the host sidebar entry and on the blank page, never in the rail header. It is not a lucide icon; do not swap it for a library glyph without a decision record, and re-check 18-19px legibility if you change the ray count.
 - Keep the project rail and session rows stable in height; text length must not change the layout of neighboring rows.
 
 ## Definition of done
@@ -247,7 +249,7 @@ Before reporting completion:
 1. node --check passes for every changed .js/.mjs file.
 2. node --test test/store.test.mjs passes.
 3. node test/host-smoke.mjs passes.
-4. node test/ui-flow.cjs reports CONTROLS 0, SWITCHES 1, HAS_PROJECTS true, and no console errors. When it also prints ACTIVE_ROWS true, HAS_TIMELINE must be true; with no active project the blank page renders instead. When it prints SWITCH_STATE unavailable, the running host predates the coordination route: restart the host and rerun before calling the UI verified.
+4. node test/ui-flow.cjs reports CONTROLS 0, SWITCHES 1, HAS_PROJECTS true, and no console errors. It also asserts one rail toggle and that the rail collapses to zero and restores. When it also prints ACTIVE_ROWS true, HAS_TIMELINE must be true; with no active project the blank page renders instead. When it prints SWITCH_STATE unavailable, the running host predates the coordination route: restart the host and rerun before calling the UI verified.
 5. node bin/dsh-god-view.mjs claims reports no active claims, or every remaining claim is intentional and explained.
 6. Screenshots are refreshed when UI changed.
 7. README.md, README.en.md, and docs/protocol.md reflect the final behavior.
