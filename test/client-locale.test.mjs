@@ -58,6 +58,19 @@ function findByClass(node, className) {
   return findByClass(node.children, className);
 }
 
+function findNode(node, predicate) {
+  if (!node || typeof node !== 'object') return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const hit = findNode(child, predicate);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (predicate(node)) return node;
+  return findNode(node.children, predicate);
+}
+
 /**
  * Load the real browser bundle with a fake host: the document language is the
  * stale \`en\` default the Host serves before its locale resolves, while the host
@@ -214,4 +227,132 @@ test('the panel exposes one coordination switch that posts the new mode', () => 
   assert.match(calls[0].url, /\/coordination$/);
   assert.equal(calls[0].init.method, 'POST');
   assert.deepEqual(JSON.parse(calls[0].init.body), { enabled: true });
+});
+test('the rail lists active projects only', () => {
+  const active = { root: '/repo/active', name: 'active-repo', active: 2, claims: 1, changes: 1 };
+  const idle = { root: '/repo/idle', name: 'idle-repo', active: 0, claims: 0, changes: 0 };
+  const board = {
+    root: active.root,
+    projects: [idle, active],
+    selectedRoot: active.root,
+    agents: [],
+    claims: [],
+    changes: [],
+    stats: { active: 2, claims: 1 },
+  };
+  const plugin = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [board, '', false, { enabled: true, trackedSessions: 1, roots: [] }, false],
+  });
+  plugin.exports.apply(plugin.ctx);
+  const tree = plugin.lastEntry('main').component();
+  const list = findNode(tree, (node) => Array.isArray(node.props && node.props.projects));
+  assert.ok(list, 'project list rendered');
+  assert.deepEqual(
+    list.props.projects.map((project) => project.name),
+    ['active-repo'],
+    'idle boards stay out of the rail',
+  );
+});
+
+test('an empty board renders one blank state, not empty section boxes', () => {
+  const board = {
+    root: '',
+    projects: [],
+    selectedRoot: '',
+    agents: [],
+    claims: [],
+    changes: [],
+    stats: { active: 0, claims: 0 },
+  };
+  const plugin = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [board, '', false, { enabled: true, trackedSessions: 0, roots: [] }, false],
+  });
+  plugin.exports.apply(plugin.ctx);
+  const tree = plugin.lastEntry('main').component();
+  assert.ok(findByClass(tree, 'pt-blank'), 'blank state rendered');
+  assert.equal(findByClass(tree, 'pt-section'), null, 'no section boxes on a blank board');
+  const text = textOf(tree);
+  assert.ok(text.includes('没有活跃项目'), 'topbar names the blank state');
+  assert.ok(text.includes('有会话在这里工作后'), 'blank state explains how projects appear');
+});
+test('the brand mark is the radiant eye, in the rail and on the blank page', () => {
+  const project = { root: '/repo/one', name: 'one', active: 1, claims: 1, changes: 0 };
+  const board = {
+    root: project.root,
+    projects: [project],
+    selectedRoot: project.root,
+    agents: [],
+    claims: [],
+    changes: [],
+    stats: { active: 1, claims: 1 },
+  };
+  const plugin = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [board, '', false, { enabled: true, trackedSessions: 1, roots: [] }, false],
+  });
+  plugin.exports.apply(plugin.ctx);
+
+  const marks = [];
+  const collect = (node) => {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      node.forEach(collect);
+      return;
+    }
+    if (typeof node.type === 'function' && node.type.name === 'BrandGlyph') marks.push(node);
+    collect(node.children);
+  };
+  collect(plugin.lastEntry('main').component());
+  assert.ok(marks.length > 0, 'the rail renders the brand mark');
+  const svg = marks[0].type(marks[0].props);
+  assert.equal(svg.props['data-glyph'], 'radiant-eye');
+  assert.equal(svg.children.length, 3, 'lens, pupil, rays');
+  assert.equal(svg.children[2].props.d.split('M').length - 1, 8, 'eight radiating strokes');
+
+  const empty = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [
+      {
+        root: '',
+        projects: [],
+        selectedRoot: '',
+        agents: [],
+        claims: [],
+        changes: [],
+        stats: { active: 0, claims: 0 },
+      },
+      '',
+      false,
+      { enabled: true, trackedSessions: 0, roots: [] },
+      false,
+    ],
+  });
+  empty.exports.apply(empty.ctx);
+  const blankMarks = [];
+  const collectBlank = (node) => {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      node.forEach(collectBlank);
+      return;
+    }
+    if (typeof node.type === 'function' && node.type.name === 'BrandGlyph') blankMarks.push(node);
+    collectBlank(node.children);
+  };
+  collectBlank(empty.lastEntry('main').component());
+  assert.deepEqual(
+    blankMarks.map((mark) => mark.props.size),
+    [19, 26],
+    'rail brand mark plus the larger blank-page mark',
+  );
+});
+
+test('the panel shows the Gantt without an event list', () => {
+  assert.doesNotMatch(SOURCE, /TimelineSection|事件明细|Event details/);
+  assert.doesNotMatch(SOURCE, /pt-tl|pt-timeline/);
 });

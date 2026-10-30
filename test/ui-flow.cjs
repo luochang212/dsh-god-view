@@ -64,17 +64,20 @@ const fs = require('node:fs');
   const switches = page.locator('.pt-root [role="switch"]');
   const switchCount = await switches.count();
   const text = await page.locator('.pt-root').innerText();
+  const hasActiveRows = (await page.locator('.pt-project').count()) > 0;
   console.log('CONTROLS', controls);
   console.log('SWITCHES', switchCount);
-  console.log('HAS_PROJECTS', text.includes('最近活跃项目'));
+  console.log('HAS_PROJECTS', text.includes('活跃项目'));
   console.log('HAS_TIMELINE', text.includes('占用甘特图'));
+  console.log('ACTIVE_ROWS', hasActiveRows);
   console.log('HAS_SESSION', text.includes('session'));
   console.log('TEXT >>>');
   console.log(text.slice(0, 2400));
   console.log('<<< TEXT');
   if (controls !== 0) throw new Error('the read-only panel must not contain inputs/selects/textareas');
   if (switchCount !== 1) throw new Error('the panel must expose exactly one coordination switch');
-  if (!text.includes('最近活跃项目') || !text.includes('占用甘特图')) throw new Error('projects/gantt section missing');
+  if (!text.includes('活跃项目')) throw new Error('project rail caption missing');
+  if (hasActiveRows && !text.includes('占用甘特图')) throw new Error('gantt section missing for an active project');
 
   // The switch is the only control, and it must actually flip and come back.
   const switchState = await switches.first().getAttribute('data-coordination');
@@ -100,21 +103,35 @@ const fs = require('node:fs');
   }
 
   const layout = await page.evaluate(() => {
-    const main = document.querySelector('.pt-main');
+    const root = document.querySelector('.pt-root');
     const side = document.querySelector('.pt-side');
     const foot = document.querySelector('.pt-side-foot');
-    if (!main || !side || !foot) return null;
+    const topbar = document.querySelector('.pt-topbar');
+    const content = document.querySelector('.pt-content');
+    if (!root || !side || !foot || !topbar || !content) return null;
     const before = foot.getBoundingClientRect().bottom - side.getBoundingClientRect().bottom;
-    main.scrollTop = main.scrollHeight;
+    content.scrollTop = content.scrollHeight;
     const after = foot.getBoundingClientRect().bottom - side.getBoundingClientRect().bottom;
-    const mainScrolls = main.scrollHeight > main.clientHeight;
-    main.scrollTop = 0;
-    return { grounded: Math.abs(before) <= 1 && Math.abs(after) <= 1, mainScrolls };
+    const contentScrolls = content.scrollHeight > content.clientHeight;
+    content.scrollTop = 0;
+    const railFullHeight = Math.abs(side.getBoundingClientRect().height - root.getBoundingClientRect().height) <= 1;
+    return {
+      grounded: Math.abs(before) <= 1 && Math.abs(after) <= 1,
+      contentScrolls,
+      railFullHeight,
+      topbarHeight: Math.round(topbar.getBoundingClientRect().height),
+      railWidth: Math.round(side.getBoundingClientRect().width),
+    };
   });
   console.log('SIDEBAR_GROUNDED', Boolean(layout && layout.grounded));
-  console.log('MAIN_SCROLLS', Boolean(layout && layout.mainScrolls));
+  console.log('RAIL_FULL_HEIGHT', Boolean(layout && layout.railFullHeight));
+  console.log('CONTENT_SCROLLS', Boolean(layout && layout.contentScrolls));
+  console.log('RAIL_WIDTH', layout && layout.railWidth);
+  console.log('TOPBAR_HEIGHT', layout && layout.topbarHeight);
   if (!layout || !layout.grounded)
     throw new Error('sidebar footer must stay at the rail bottom while the detail pane scrolls');
+  if (!layout.railFullHeight) throw new Error('the project rail must reach the bottom of the panel');
+  if (layout.topbarHeight !== 56) throw new Error('the topbar must render at 56px');
 
   await page.screenshot({ path: 'screenshots/local/01-panel.png', fullPage: false });
   await page.evaluate(() => document.body.setAttribute('data-ds-dark-theme', ''));
