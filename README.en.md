@@ -97,7 +97,7 @@ One read-only screen rendered as a full-bleed app shell (no page padding):
 
 - **Sidebar (left, 232px, full height)**: a brand area at the top (a repo-drawn radiant-eye glyph + God's Eye View) above the Active projects navigation, which lists only projects with a live session or a live lease; idle boards are not rendered. Each row shows the shared status dot, active sessions, claims, active changes, and last activity. The selected project's session and file counts sit in a footer at the bottom. Active dots pulse subtly and stop under reduced-motion.
 - **Topbar (56px)**: the selected project's name and repository path on the left, and a single unlabeled coordination switch on the right (named for screen readers, explained on hover); the coordination-off notice is a slim strip under the topbar.
-- **Content**: scrolls independently — sessions and the claim Gantt. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary; the full event record stays in the CLI (`dsh-god-view changes`).
+- **Content**: scrolls independently — sessions and the claim Gantt, composed as two white cards on a faintly tinted page in light mode. Cards use the host elevation token (0.5px hairline stroke plus a soft shadow) and a 12px radius; each header sits inside its card and rows are separated by hairlines. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary; the full event record stays in the CLI (`dsh-god-view changes`).
 - **When nothing is active**: the page is one quiet blank state — a low-opacity glyph and a single line (projects appear once a session works here; with coordination off it points at the switch). No empty sections, empty Gantt, or dashed placeholders, so the page can be read and left at a glance.
 - **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; the coordination slider in the topbar is the only control.
 
@@ -186,7 +186,7 @@ It stores root / name / lastSeenAt only. Presence, claims, and timelines always 
 
 ## 🧭 Decisions
 
-Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are fourteen implemented decisions:
+Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are fifteen implemented decisions:
 
 - **ADR 1**: one board per repository; the global project index only discovers and summarizes, and never introduces a cross-project lock.
 - **ADR 2**: no messages, inbox, or question queue; focus is a session property; the panel is read-only.
@@ -202,6 +202,7 @@ Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) 
 - **ADR 12**: the brand mark is a repo-drawn radiant eye (lens ring, pupil, eight rays) instead of a library eye icon.
 - **ADR 13**: the topbar carries only the coordination switch — no live indicator, no switch label.
 - **ADR 14**: no event list under the Gantt — exact times live in the bar tooltip, the full record in the CLI.
+- **ADR 15**: the content area is two section cards on a tinted page (host elevation token, in-card headers, hairline rows); the brand tile grows to 36px.
 
 Run **adrkit list** at task start and read the relevant implemented records. Use **adrkit relevant <path>** when a task targets specific files. Add or change decisions with **adrkit record** or **adrkit propose**, and run **adrkit validate --all** before finishing.
 

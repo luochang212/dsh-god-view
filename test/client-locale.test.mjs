@@ -254,6 +254,7 @@ test('the rail lists active projects only', () => {
     ['active-repo'],
     'idle boards stay out of the rail',
   );
+  assert.ok(findByClass(tree, 'pt-card'), 'a populated board renders section cards');
 });
 
 test('an empty board renders one blank state, not empty section boxes', () => {
@@ -274,7 +275,7 @@ test('an empty board renders one blank state, not empty section boxes', () => {
   plugin.exports.apply(plugin.ctx);
   const tree = plugin.lastEntry('main').component();
   assert.ok(findByClass(tree, 'pt-blank'), 'blank state rendered');
-  assert.equal(findByClass(tree, 'pt-section'), null, 'no section boxes on a blank board');
+  assert.equal(findByClass(tree, 'pt-card'), null, 'no cards on a blank board');
   const text = textOf(tree);
   assert.ok(text.includes('没有活跃项目'), 'topbar names the blank state');
   assert.ok(text.includes('有会话在这里工作后'), 'blank state explains how projects appear');
@@ -347,7 +348,7 @@ test('the brand mark is the radiant eye, in the rail and on the blank page', () 
   collectBlank(empty.lastEntry('main').component());
   assert.deepEqual(
     blankMarks.map((mark) => mark.props.size),
-    [19, 26],
+    [20, 26],
     'rail brand mark plus the larger blank-page mark',
   );
 });

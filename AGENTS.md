@@ -123,6 +123,7 @@ Current implemented decisions cover:
 - [ADR 12](adr/implemented/12-use-a-repo-owned-radiant-eye-mark-instead-of-a-library-icon.md): the brand mark is a repo-owned radiant eye, not a library icon.
 - [ADR 13](adr/implemented/13-let-the-topbar-carry-only-the-coordination-switch.md): the topbar carries only the switch — no live indicator, no label.
 - [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md): the Gantt is the only timeline surface; no event list under it.
+- [ADR 15](adr/implemented/15-compose-the-content-area-as-two-section-cards-on-a-tinted-page.md): the content area is section cards on a tinted page, not outlined boxes.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -232,6 +233,7 @@ Reloading:
 - Action buttons are 30px high, use icon + label by default, and have a visible :focus-visible ring. Icon-only actions need an aria-label and title.
 - The coordination switch is a slider: a button with role=switch and aria-checked, a 34x20 track and a 16px thumb. Never a checkbox input; the read-only test counts input/select/textarea and requires zero.
 - Section and rail headers use the shared Icon component; status dots use one vocabulary; active dots may pulse only with a prefers-reduced-motion off switch.
+- The content area is section cards, not boxes: one card per concept with its header inside, rows divided by `border-l1` hairlines, `elevation-soft` plus a 12px radius instead of a 1px border, and the page tinted one step below the cards. Do not give individual rows their own border, radius or shadow; do not add a card where there is nothing to show (ADR 15).
 - The brand mark is the repo's own radiant eye (24x24, ring r=4.4, pupil r=1.4, eight rays r=8.2-10.6, 1.7 stroke). It is not a lucide icon; do not swap it for a library glyph without a decision record, and re-check 18-19px legibility if you change the ray count.
 - Keep the project rail and session rows stable in height; text length must not change the layout of neighboring rows.
 
