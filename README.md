@@ -99,6 +99,8 @@ claim 是精确到文件路径的，不支持目录或 glob。
 
 ## 🚀 快速开始
 
+**兼容性**：DSH `>=0.2.0 <0.3.0`，Node `>=20`；peer 依赖 `@deepseek-ai/cordis ~4.0.5`。已在 DSH 0.2.1 上通过 host smoke 和 UI 测试。
+
 ### 1. 安装到 DSH profile
 
 ```sh

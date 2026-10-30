@@ -99,6 +99,8 @@ On narrow screens the project rail becomes a horizontal scrollable list above th
 
 ## 🚀 Quick start
 
+**Compatibility**: DSH `>=0.2.0 <0.3.0`, Node `>=20`; peer dependency `@deepseek-ai/cordis ~4.0.5`. Verified against DSH 0.2.1 with host smoke and UI tests.
+
 ### 1. Install into a DSH profile
 
 ```sh
