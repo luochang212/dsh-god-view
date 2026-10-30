@@ -127,7 +127,7 @@ Coordination is off by default. The switch is a single global file in the regist
 - **Off (default, or file missing/unreadable):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
 - **On:** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
 - Turning it on backfills presence for tracked sessions. Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire.
-- The switch never flips itself. A host that sees several sessions while off only reports that in the panel.
+- The switch never flips itself. A host that sees several sessions while off keeps that count internally and does not warn in the panel (ADR 18).
 
 ## Write guard
 
