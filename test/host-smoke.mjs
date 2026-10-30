@@ -161,6 +161,10 @@ assert.equal(response.status, 200);
 let projects = await response.json();
 assert.ok(projects.projects.some((project) => project.root === repo));
 assert.ok(projects.projects.some((project) => project.root === second));
+const repoSummary = projects.projects.find((project) => project.root === repo);
+assert.equal(typeof repoSummary.working, 'number', 'the summary exposes a working count');
+assert.ok(repoSummary.lastActivityAt > 0, 'the summary exposes real activity');
+assert.equal(repoSummary.status, 'active', 'recent activity keeps the project active');
 
 response = await fetch(base + '/state?root=' + encodeURIComponent(repo));
 assert.equal(response.status, 200);

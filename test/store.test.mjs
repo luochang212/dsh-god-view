@@ -92,6 +92,46 @@ test('project registry and summaries are separate from the board', () => {
   assert.equal(summary.status, 'active');
 });
 
+test('activity recency is separate from heartbeat liveness', () => {
+  const root = repo();
+  const now = Date.now();
+  const old = now - S.ACTIVE_WINDOW_MS - 60_000;
+  S.createAgent(root, { id: 'old', name: 'Old', now: old, status: 'idle' });
+  S.heartbeat(root, 'old');
+  let summary = S.projectSummary(root);
+  assert.equal(summary.status, 'idle', 'a live host is not recent activity');
+  assert.equal(summary.working, 0);
+  assert.equal(summary.lastActivityAt, old, 'last activity ignores the heartbeat');
+
+  S.updateAgent(root, 'old', { status: 'idle', now });
+  summary = S.projectSummary(root);
+  assert.equal(summary.status, 'active', 'recent activity keeps the board listed');
+  assert.equal(summary.working, 0);
+
+  S.updateAgent(root, 'old', { status: 'active', now });
+  summary = S.projectSummary(root);
+  assert.equal(summary.status, 'active');
+  assert.equal(summary.working, 1, 'working sessions are counted');
+
+  const blockedRoot = repo();
+  S.createAgent(blockedRoot, { id: 'b', name: 'B', now: old, status: 'blocked' });
+  S.heartbeat(blockedRoot, 'b');
+  summary = S.projectSummary(blockedRoot);
+  assert.equal(summary.status, 'active', 'a blocked session stays listed after the window');
+  assert.equal(summary.blocked, 1);
+
+  const claimedRoot = repo();
+  S.createAgent(claimedRoot, { id: 'c', name: 'C', now: old, status: 'idle' });
+  S.heartbeat(claimedRoot, 'c');
+  S.claimPaths(claimedRoot, 'c', ['src/a.ts']);
+  summary = S.projectSummary(claimedRoot);
+  assert.equal(summary.status, 'claimed');
+  S.releasePaths(claimedRoot, 'c', ['src/a.ts'], { summary: 'done' });
+  summary = S.projectSummary(claimedRoot);
+  assert.equal(summary.status, 'active', 'a fresh release is recent activity');
+  assert.equal(summary.claims, 0);
+});
+
 test('concurrent processes create agents and claims without corruption', async () => {
   const root = repo();
   S.createAgent(root, { id: 'hub', name: 'Hub' });

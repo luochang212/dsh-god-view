@@ -38,12 +38,13 @@ A board is always repository-local. The index only lists roots; it never merges 
   "files": [],
   "branch": null,
   "startedAt": 1793280396000,
+  "updatedAt": 1793280396000,
   "heartbeatAt": 1793280396000,
   "ttlMs": 90000
 }
 ```
 
-Focus is a current property, not a message. It has no reply state. Heartbeats renew it while the agent is tracked; stale presence is hidden by default.
+Focus is a current property, not a message. It has no reply state. Heartbeats renew it while the agent is tracked; stale presence is hidden by default. `heartbeatAt` + `ttlMs` prove only that the host process is alive; `updatedAt` is the last real activity (a user/subagent prompt, a turn change, a tool result, or team_status). The heartbeat is never treated as activity.
 
 ## Claims and changes
 
@@ -123,7 +124,7 @@ Coordination is off by default. The switch is a single global file in the regist
 { "version": 1, "enabled": false, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
 ```
 
-- **Off (default, or file missing/unreadable):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with live presence or a live lease (see ADR 11).
+- **Off (default, or file missing/unreadable):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
 - **On:** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
 - Turning it on backfills presence for tracked sessions. Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire.
 - The switch never flips itself. A host that sees several sessions while off only reports that in the panel.
@@ -157,6 +158,8 @@ GET /projects reads the union of the host's known roots and this index, then com
   "name": "repo",
   "agents": 2,
   "active": 1,
+  "working": 1,
+  "blocked": 0,
   "claims": 2,
   "changes": 1,
   "lastActivityAt": 1793280399000,
@@ -166,7 +169,7 @@ GET /projects reads the union of the host's known roots and this index, then com
 }
 ```
 
-Projects are sorted by last activity. Selecting a project only changes which board is read.
+`active` is the number of live non-stale sessions that are not done, including idle ones; it is a session count, not a "working now" count. `working` counts sessions with status `active`, and `blocked` counts status `blocked`. `lastActivityAt` is the newest `updatedAt`, claim timestamp, or change timestamp — never a heartbeat. A project's `status` is `active` when a session is working or blocked, or when `lastActivityAt` is within 30 minutes (`ACTIVE_WINDOW_MS`); it is `claimed` when only live leases remain; otherwise `idle`. Projects are sorted by last activity. Selecting a project only changes which board is read.
 
 ## HTTP surface
 

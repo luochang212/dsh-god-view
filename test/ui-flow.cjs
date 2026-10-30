@@ -70,6 +70,7 @@ const fs = require('node:fs');
   console.log('HAS_PROJECTS', text.includes('活跃项目'));
   console.log('HAS_TIMELINE', text.includes('占用甘特图'));
   console.log('ACTIVE_ROWS', hasActiveRows);
+  console.log('HAS_WORKING', text.includes('进行中'));
   console.log('HAS_SESSION', text.includes('session'));
   console.log('TEXT >>>');
   console.log(text.slice(0, 2400));

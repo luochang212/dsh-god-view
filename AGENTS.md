@@ -24,8 +24,8 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 - The global project index only aggregates status. It must not merge claims, timelines, or leases across repositories.
 - There are exactly three tools: team_status, team_roster, team_claim. Adding a tool is a product decision, not a small refactor.
 - The browser panel is a two-pane master-detail layout: full-height project rail on the left, selected project detail on the right. Do not move the project list back to large cards above the Gantt.
-- The rail lists active boards only (status active or claimed). Idle boards are hidden; with none active the page is one quiet blank state, never empty section boxes. See [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md).
-- The project rail footer shows the selected project's active-session and files-in-use counts. The rail must reach the bottom of the panel; do not let it float or stop after the last project row.
+- The rail lists active boards only: a working or blocked session, a live lease, or real activity within the last 30 minutes. A session whose only sign of life is the heartbeat is not active. Idle boards are hidden; with none active the page is one quiet blank state, never empty section boxes. See [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md) and [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md).
+- The project rail footer shows the selected project's working-session and files-in-use counts. The rail must reach the bottom of the panel; do not let it float or stop after the last project row.
 - The Gantt is the only timeline surface in the panel. Exact times come from the bar tooltip; the full event record lives in the CLI. Do not add an event list under the Gantt. See [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md).
 
 ## Architecture
@@ -74,7 +74,8 @@ The registry is only a recent-project index. Each board remains the source of tr
 - The host reads the coordination switch from the registry dir before anything writes. When it is off the host only tracks sessions in memory and refreshes the project index; it never creates a board, a presence row, a lease, or a change.
 - The host resolves a board root from each agent's session cwd. config.root is optional and empty by default; if set, it forces one repository for compatibility.
 - track() registers the root in the global index.
-- presence is written per agent; focus is updated from the first user/subagent prompt and by team_status.
+- presence is written per agent; focus is updated from the first user/subagent prompt and by team_status. Every user/subagent prompt also touches `updatedAt`, which is the activity clock.
+- The heartbeat (`heartbeatAt` + TTL) only proves the host process is alive and drops stale rows. `updatedAt`, claim timestamps, and change timestamps are the activity signals. projectSummary counts a board active when a session is working or blocked, a lease is live, or `lastActivityAt` is within `ACTIVE_WINDOW_MS` (30 minutes); the heartbeat is never used as activity.
 - write/edit goes through tools/pre-execute. A live claim owned by another agent is denied. The configured claimPolicy controls auto/advisory/require/off behavior.
 - claim creates or extends the agent's active change and appends claim events to its timeline.
 - release removes the lease, appends release events, and marks the change done when no leases remain.
@@ -124,6 +125,7 @@ Current implemented decisions cover:
 - [ADR 13](adr/implemented/13-let-the-topbar-carry-only-the-coordination-switch.md): the topbar carries only the switch — no live indicator, no label.
 - [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md): the Gantt is the only timeline surface; no event list under it.
 - [ADR 15](adr/implemented/15-compose-the-content-area-as-two-section-cards-on-a-tinted-page.md): the content area is section cards on a tinted page, not outlined boxes.
+- [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md): active means recent work (30 minutes), working/blocked, or a live lease; the heartbeat only filters dead hosts.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -201,8 +203,8 @@ Reloading:
 - Auto claims release on idle. Explicit claims need an explicit release or TTL expiry. If a claim looks stale, check whether the owning session is still running before forcing a release.
 - Focus and claims are separate. A file is not leased just because it appears in focus or files.
 - The project rail is full-height and fixed; the detail pane is the scroll container. The project list scrolls independently; the footer stays at the bottom of the rail, never below the viewport.
-- The rail must show status at a glance: dot, name, active/claims/active-change counts, last activity.
-- The rail lists only boards with a live presence or a live lease. When the selected board goes idle, selection moves to the first active board; with none, the blank page renders and the content has zero sections. Do not add a filter control, a second list, or a placeholder box to bring idle boards back.
+- The rail must show status at a glance: dot, name, working/blocked/claims/change counts, last activity.
+- The rail lists only boards with a working/blocked session, a live lease, or activity within 30 minutes; a heartbeat alone is not a reason to list a board. When the selected board goes idle, selection moves to the first active board; with none, the blank page renders and the content has zero sections. Do not add a filter control, a second list, or a placeholder box to bring idle boards back.
 - The panel has exactly one control: the coordination switch. The UI test asserts one switch and zero inputs/selects/textareas.
 - Turning coordination off must release this host's auto leases; explicit leases are left to their owner. Never enable coordination automatically, including when a second session appears.
 - A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
@@ -232,7 +234,8 @@ Reloading:
 - Any name, path, focus, or meta line that can overflow must be single-line ellipsized with a title or accessible tooltip. Do not let a row reflow or grow unpredictably.
 - Action buttons are 30px high, use icon + label by default, and have a visible :focus-visible ring. Icon-only actions need an aria-label and title.
 - The coordination switch is a slider: a button with role=switch and aria-checked, a 34x20 track and a 16px thumb. Never a checkbox input; the read-only test counts input/select/textarea and requires zero.
-- Section and rail headers use the shared Icon component; status dots use one vocabulary; active dots may pulse only with a prefers-reduced-motion off switch.
+- Section and rail headers use the shared Icon component; status dots use one vocabulary. A project dot breathes only while a session is working (red blocked, amber claimed, grey recent-only), and the motion stops with a prefers-reduced-motion off switch.
+- UI labels are 会话 / 进行中 / 受阻 / 占用 / 变更, plus the umbrella 活跃项目. Never label a heartbeat or a live session as 在线 or 活跃.
 - The content area is section cards, not boxes: one card per concept with its header inside, rows divided by `border-l1` hairlines, `elevation-soft` plus a 12px radius instead of a 1px border, and the page tinted one step below the cards. Do not give individual rows their own border, radius or shadow; do not add a card where there is nothing to show (ADR 15).
 - The brand mark is the repo's own radiant eye (24x24, ring r=4.4, pupil r=1.4, eight rays r=8.2-10.6, 1.7 stroke). It is not a lucide icon; do not swap it for a library glyph without a decision record, and re-check 18-19px legibility if you change the ray count.
 - Keep the project rail and session rows stable in height; text length must not change the layout of neighboring rows.

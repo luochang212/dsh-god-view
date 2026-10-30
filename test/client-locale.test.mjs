@@ -204,7 +204,7 @@ test('the panel exposes one coordination switch that posts the new mode', () => 
     agents: [],
     claims: [],
     changes: [],
-    stats: { active: 0, claims: 0 },
+    stats: { active: 0, working: 0, blocked: 0, claims: 0 },
   };
   const plugin = loadPlugin({
     documentLang: 'zh-CN',
@@ -229,8 +229,28 @@ test('the panel exposes one coordination switch that posts the new mode', () => 
   assert.deepEqual(JSON.parse(calls[0].init.body), { enabled: true });
 });
 test('the rail lists active projects only', () => {
-  const active = { root: '/repo/active', name: 'active-repo', active: 2, claims: 1, changes: 1 };
-  const idle = { root: '/repo/idle', name: 'idle-repo', active: 0, claims: 0, changes: 0 };
+  const active = {
+    root: '/repo/active',
+    name: 'active-repo',
+    active: 2,
+    working: 1,
+    blocked: 0,
+    claims: 1,
+    changes: 1,
+    status: 'active',
+    lastActivityAt: Date.now() - 60_000,
+  };
+  const idle = {
+    root: '/repo/idle',
+    name: 'idle-repo',
+    active: 0,
+    working: 0,
+    blocked: 0,
+    claims: 0,
+    changes: 0,
+    status: 'idle',
+    lastActivityAt: Date.now() - 3_600_000,
+  };
   const board = {
     root: active.root,
     projects: [idle, active],
@@ -238,7 +258,7 @@ test('the rail lists active projects only', () => {
     agents: [],
     claims: [],
     changes: [],
-    stats: { active: 2, claims: 1 },
+    stats: { active: 2, working: 1, blocked: 0, claims: 1 },
   };
   const plugin = loadPlugin({
     documentLang: 'zh-CN',
@@ -257,6 +277,148 @@ test('the rail lists active projects only', () => {
   assert.ok(findByClass(tree, 'pt-card'), 'a populated board renders section cards');
 });
 
+test('working sessions are marked, and old activity is not shown as just now', () => {
+  const now = Date.now();
+  const project = {
+    root: '/repo/one',
+    name: 'one',
+    active: 2,
+    working: 1,
+    blocked: 0,
+    claims: 0,
+    changes: 0,
+    status: 'active',
+    lastActivityAt: now - 5 * 60_000,
+  };
+  const board = {
+    root: project.root,
+    projects: [project],
+    selectedRoot: project.root,
+    agents: [
+      {
+        id: 'a',
+        name: 'A',
+        status: 'active',
+        stale: false,
+        heartbeatAt: now,
+        updatedAt: now - 5 * 60_000,
+        sessionId: 'session-a',
+        focus: 'building',
+      },
+      {
+        id: 'b',
+        name: 'B',
+        status: 'idle',
+        stale: false,
+        heartbeatAt: now,
+        updatedAt: now - 2 * 3600_000,
+        sessionId: 'session-b',
+        focus: 'reading',
+      },
+    ],
+    claims: [],
+    changes: [],
+    stats: { active: 2, working: 1, blocked: 0, claims: 0 },
+  };
+  const plugin = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [board, '', false, { enabled: true, trackedSessions: 2, roots: [] }, false],
+  });
+  plugin.exports.apply(plugin.ctx);
+  const tree = plugin.lastEntry('main').component();
+  const text = textOf(tree);
+  assert.ok(text.includes('2 会话'), 'sessions are counted');
+  assert.ok(text.includes('1 进行中'), 'working sessions are counted');
+  const list = findNode(tree, (node) => Array.isArray(node.props && node.props.projects));
+  const sectionTree = list.type(list.props);
+  const row = findNode(sectionTree, (node) => node.type && node.type.name === 'ProjectRow');
+  assert.ok(row, 'project row rendered');
+  const rowTree = row.type(row.props);
+  const rowText = textOf(rowTree);
+  assert.ok(rowText.includes('5m'), 'the project shows its last activity');
+  const sessionTexts = [];
+  const collectSessions = (node) => {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      node.forEach(collectSessions);
+      return;
+    }
+    if (node.type && node.type.name === 'SessionRow') sessionTexts.push(textOf(node.type(node.props)));
+    collectSessions(node.children);
+  };
+  collectSessions(tree);
+  const sessionsText = sessionTexts.join(' ');
+  assert.ok(sessionsText.includes('2h'), 'an idle session keeps its real last activity, not its heartbeat');
+  assert.ok(!sessionsText.includes('0s') && !sessionsText.includes('1s'), 'the heartbeat is not displayed as activity');
+  const dot = findNode(
+    rowTree,
+    (node) =>
+      typeof (node.props && node.props.className) === 'string' && node.props.className.indexOf('pt-project-dot') === 0,
+  );
+  assert.ok(dot && dot.props.className.includes('working'), 'a working project dot pulses');
+});
+
+test('a recently active board stays listed without a working mark', () => {
+  const now = Date.now();
+  const project = {
+    root: '/repo/recent',
+    name: 'recent',
+    active: 1,
+    working: 0,
+    blocked: 0,
+    claims: 0,
+    changes: 0,
+    status: 'active',
+    lastActivityAt: now - 3 * 60_000,
+  };
+  const board = {
+    root: project.root,
+    projects: [project],
+    selectedRoot: project.root,
+    agents: [
+      {
+        id: 'a',
+        name: 'A',
+        status: 'idle',
+        stale: false,
+        heartbeatAt: now,
+        updatedAt: now - 3 * 60_000,
+        sessionId: 'session-a',
+        focus: 'reading',
+      },
+    ],
+    claims: [],
+    changes: [],
+    stats: { active: 1, working: 0, blocked: 0, claims: 0 },
+  };
+  const plugin = loadPlugin({
+    documentLang: 'zh-CN',
+    activeLocale: 'zh',
+    queue: [board, '', false, { enabled: true, trackedSessions: 1, roots: [] }, false],
+  });
+  plugin.exports.apply(plugin.ctx);
+  const tree = plugin.lastEntry('main').component();
+  const list = findNode(tree, (node) => Array.isArray(node.props && node.props.projects));
+  assert.deepEqual(
+    list.props.projects.map((item) => item.name),
+    ['recent'],
+    'recent activity keeps an otherwise idle board',
+  );
+  const sectionTree = list.type(list.props);
+  const row = findNode(sectionTree, (node) => node.type && node.type.name === 'ProjectRow');
+  const rowTree = row.type(row.props);
+  const text = textOf(rowTree);
+  assert.ok(text.includes('0 进行中'), 'no working session is claimed');
+  assert.ok(text.includes('3m'), 'the board shows why it is still listed');
+  const dot = findNode(
+    rowTree,
+    (node) =>
+      typeof (node.props && node.props.className) === 'string' && node.props.className.indexOf('pt-project-dot') === 0,
+  );
+  assert.ok(dot && !dot.props.className.includes('working'), 'a recent-only board does not pulse');
+});
+
 test('an empty board renders one blank state, not empty section boxes', () => {
   const board = {
     root: '',
@@ -265,7 +427,7 @@ test('an empty board renders one blank state, not empty section boxes', () => {
     agents: [],
     claims: [],
     changes: [],
-    stats: { active: 0, claims: 0 },
+    stats: { active: 0, working: 0, blocked: 0, claims: 0 },
   };
   const plugin = loadPlugin({
     documentLang: 'zh-CN',
@@ -278,10 +440,20 @@ test('an empty board renders one blank state, not empty section boxes', () => {
   assert.equal(findByClass(tree, 'pt-card'), null, 'no cards on a blank board');
   const text = textOf(tree);
   assert.ok(text.includes('没有活跃项目'), 'topbar names the blank state');
-  assert.ok(text.includes('有会话在这里工作后'), 'blank state explains how projects appear');
+  assert.ok(text.includes('最近没有活动'), 'blank state explains why nothing is listed');
 });
 test('the brand mark is the radiant eye, in the rail and on the blank page', () => {
-  const project = { root: '/repo/one', name: 'one', active: 1, claims: 1, changes: 0 };
+  const project = {
+    root: '/repo/one',
+    name: 'one',
+    active: 1,
+    working: 1,
+    blocked: 0,
+    claims: 1,
+    changes: 0,
+    status: 'active',
+    lastActivityAt: Date.now(),
+  };
   const board = {
     root: project.root,
     projects: [project],
@@ -289,7 +461,7 @@ test('the brand mark is the radiant eye, in the rail and on the blank page', () 
     agents: [],
     claims: [],
     changes: [],
-    stats: { active: 1, claims: 1 },
+    stats: { active: 1, working: 1, blocked: 0, claims: 1 },
   };
   const plugin = loadPlugin({
     documentLang: 'zh-CN',
@@ -326,7 +498,7 @@ test('the brand mark is the radiant eye, in the rail and on the blank page', () 
         agents: [],
         claims: [],
         changes: [],
-        stats: { active: 0, claims: 0 },
+        stats: { active: 0, working: 0, blocked: 0, claims: 0 },
       },
       '',
       false,
