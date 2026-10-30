@@ -16,7 +16,8 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 
 ## Non-negotiable product shape
 
-- The panel is read-only. There is no data input. Refresh is the only action button; project rows are navigation buttons. Do not add a composer, message box, reply box, question queue, or human input.
+- Coordination is off by default. Dormant means the plugin writes nothing: no board directory, no presence, no leases, no history, no prompt context, and no write guard. One switch in the panel header turns it on; nothing turns it on automatically. See [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md).
+- The panel is read-only apart from that one switch. There is no data input and no refresh button; the panel polls by itself. Project rows are navigation buttons. Do not add a composer, message box, reply box, question queue, or human input.
 - There are no messages. There is no team_send, inbox, needsReply, read state, reply_to, message TTL, or "Agent questions" section. Do not reintroduce them without an explicit request.
 - Focus is a property of the current session at the current time. It is not a message and has no lifecycle.
 - Boards are per repository. A claim in repo A must never block repo B.
@@ -30,19 +31,21 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 
 ### Files
 
-| Path                      | Responsibility                                                                                                                             |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| lib/store.js              | Shared file format and all local persistence. Source of truth for presence, claims, changes, timeline, project summaries, global registry. |
-| lib/index.js              | DSH host plugin. Lifecycle, tools, write guard, prompt context, HTTP routes, project discovery.                                            |
-| lib/client.js             | Browser bundle loaded through window.**ModuleLoader**. Read-only project rail, sessions, Gantt, details.                                   |
-| bin/dsh-parallel.mjs      | Dependency-free CLI over the same store.                                                                                                   |
-| test/store.test.mjs       | Store, timeline, registry, concurrency, CLI tests.                                                                                         |
-| test/host-smoke.mjs       | Host lifecycle, tools, write guard, projects endpoint.                                                                                     |
-| test/ui-flow.cjs          | Read-only assertions and screenshots against the running desktop host.                                                                     |
-| test/ui-shot.cjs          | Screenshot helper.                                                                                                                         |
-| examples/cordis.patch.yml | Profile install example.                                                                                                                   |
-| docs/protocol.md          | Wire and file formats, HTTP surface, migration notes.                                                                                      |
-| adr/                      | Architecture decision records maintained with adr-kit. Read relevant implemented records before changing scoped behavior.                  |
+| Path                        | Responsibility                                                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| lib/store.js                | Shared file format and all local persistence. Source of truth for presence, claims, changes, timeline, project summaries, global registry. |
+| lib/index.js                | DSH host plugin. Lifecycle, tools, write guard, prompt context, HTTP routes, project discovery.                                            |
+| lib/client.js               | Browser bundle loaded through window.**ModuleLoader**. Read-only project rail, sessions, Gantt, details.                                   |
+| bin/dsh-god-view.mjs        | Dependency-free CLI over the same store.                                                                                                   |
+| test/store.test.mjs         | Store, timeline, registry, concurrency, CLI tests.                                                                                         |
+| test/host-smoke.mjs         | Host lifecycle, dormant/enabled coordination, tools, write guard, HTTP routes.                                                             |
+| test/client-locale.test.mjs | Client language source, live locale switching, and the coordination switch, driven through the real browser bundle.                        |
+| test/ui-flow.cjs            | Read-only assertions and screenshots against the running desktop host.                                                                     |
+| test/ui-lang.cjs            | Cold-start language regression against the running desktop host (delayed native locale bridge).                                            |
+| test/ui-shot.cjs            | Screenshot helper.                                                                                                                         |
+| examples/cordis.patch.yml   | Profile install example.                                                                                                                   |
+| docs/protocol.md            | Wire and file formats, HTTP surface, migration notes.                                                                                      |
+| adr/                        | Architecture decision records maintained with adr-kit. Read relevant implemented records before changing scoped behavior.                  |
 
 ### Data layout
 
@@ -56,16 +59,18 @@ Per repository:
   changes/<change-id>.json
 ```
 
-Global index:
+Global index and switch:
 
 ```text
 ~/.dsh/parallel/projects.json
+~/.dsh/parallel/state.json      # { "enabled": true|false } — the coordination switch
 ```
 
 The registry is only a recent-project index. Each board remains the source of truth.
 
 ### Runtime flow
 
+- The host reads the coordination switch from the registry dir before anything writes. When it is off the host only tracks sessions in memory and refreshes the project index; it never creates a board, a presence row, a lease, or a change.
 - The host resolves a board root from each agent's session cwd. config.root is optional and empty by default; if set, it forces one repository for compatibility.
 - track() registers the root in the global index.
 - presence is written per agent; focus is updated from the first user/subagent prompt and by team_status.
@@ -75,13 +80,16 @@ The registry is only a recent-project index. Each board remains the source of tr
 - idle releases auto claims; status done releases all of that agent's claims; session disposal releases all.
 - expiry removes leases and appends expire events.
 - GET /projects merges known roots and the global registry, then calls projectSummary() on each board.
-- GET /state?root=<abs> returns one board. The browser uses that for the detail pane.
+- GET /state?root=<abs> returns one board plus the coordination status. The browser uses that for the detail pane.
+- GET /coordination returns the switch state and how many sessions the host tracks; POST /coordination {enabled} flips it, backfills presence when turning on, and releases this host's auto leases when turning off.
 
 ### Browser plugin
 
 - package.json declares dsh.client.platform = web.
 - lib/client.js registers sidebar.panellist and main through ctx.slots.
-- The panel is mounted under the Agent 协作台 / Agents sidebar entry.
+- The panel is mounted under the 上帝视角 / God's Eye sidebar entry.
+- The header carries the coordination switch (role=switch, data-coordination=on|off|unavailable). It POSTs /coordination and re-reads state; when the running host predates the route the switch renders disabled instead of breaking the panel.
+- UI language comes from the injected `locale` service (`ctx.locale.getSnapshot()` / `ctx.locale.subscribe`), never from a module-time read of `<html lang>`; see [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md). The sidebar label is registration metadata, so it is re-registered when the language changes.
 - Client code must use only browser APIs and the module loader; no Node imports.
 - There is no bundler step in this repository. A page refresh loads the latest client.js.
 
@@ -106,6 +114,8 @@ Current implemented decisions cover:
 - [ADR 5](adr/implemented/5-keep-the-board-to-one-read-only-screen-and-three-concepts.md): one read-only screen and three concepts; no tabs, cards, feeds, setup, or composer.
 - [ADR 6](adr/implemented/6-record-conversation-identity-intent-paths-and-release-state-on-every-change.md): change records carry conversation identity, intent, paths, and release state.
 - [ADR 7](adr/implemented/7-use-short-lived-auto-leases-plus-explicit-planned-leases.md): auto leases for writes, explicit leases for planned work, idle release and TTL.
+- [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md): UI language comes from the injected locale service, not the served document.
+- [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): coordination is off by default behind one panel switch.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -115,14 +125,15 @@ When a choice is already shipped, use adrkit record with --raised-by and --decid
 npm test                                  # store tests only (test/*.test.mjs)
 node --test test/store.test.mjs           # explicit store/timeline/concurrency/CLI tests
 node test/host-smoke.mjs                  # host tools, guard, /projects, /claim, /release
-node test/ui-flow.cjs                     # read-only UI; needs the desktop host + Playwright
+node test/ui-flow.cjs                     # read-only UI + the one switch; needs the desktop host + Playwright
+node test/ui-lang.cjs                     # cold-start language regression; needs the desktop host + Playwright
 node test/ui-shot.cjs                     # write ignored screenshots/local/01-panel.png and 03-dark.png
 ```
 
 Syntax check before finishing:
 
 ```sh
-for f in lib/store.js lib/index.js lib/client.js bin/dsh-parallel.mjs test/store.test.mjs test/host-smoke.mjs; do node --check "$f"; done
+for f in lib/store.js lib/index.js lib/client.js bin/dsh-god-view.mjs test/store.test.mjs test/host-smoke.mjs; do node --check "$f"; done
 ```
 
 The UI tests assume the desktop DSH GUI is already running at the configured URL, Playwright is available through the machine-level node_modules, and the desktop auth cookie is available. The helper scripts handle that environment; do not hardcode secrets into documentation or source.
@@ -144,15 +155,15 @@ Typical profile install:
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel"
+ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
 ```
 
 Profile row:
 
 ```yaml
 - insert:
-    - id: dsh-parallel
-      name: dsh-parallel
+    - id: dsh-god-view
+      name: dsh-god-view
       config:
         heartbeatMs: 15000
         ttlMs: 60000
@@ -183,12 +194,14 @@ Reloading:
 - Focus and claims are separate. A file is not leased just because it appears in focus or files.
 - The project rail is full-height and fixed; the detail pane is the scroll container. The project list scrolls independently; the footer stays at the bottom of the rail, never below the viewport.
 - The rail must show status at a glance: dot, name, active/claims/active-change counts, last activity.
-- Keep the read-only control count at zero. The UI test asserts controls = 0.
+- The panel has exactly one control: the coordination switch. The UI test asserts one switch and zero inputs/selects/textareas.
+- Turning coordination off must release this host's auto leases; explicit leases are left to their owner. Never enable coordination automatically, including when a second session appears.
+- A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
 - A page refresh is required after client changes; a host reload is required after lib/index.js changes.
 - Protocol changes are breaking. If a file shape or route changes incompatibly, bump PROTOCOL and update README, docs/protocol.md, tests, and the migration section.
 - Protocol 2 boards may still exist. Old messages are ignored and can be deleted. Presence/claim/change files without timelines get a fallback timeline from createdAt/releasedAt.
 - The global registry is capped at 200 entries. Clean up demo roots rather than leaving fake projects in it.
-- Do not leave active claims after verification. Run node bin/dsh-parallel.mjs claims and release what you created.
+- Do not leave active claims after verification. Run node bin/dsh-god-view.mjs claims and release what you created.
 - Do not put volatile live state (current PIDs, session ids, claim counts) into README or AGENTS.md.
 
 ## Editing rules
@@ -209,6 +222,7 @@ Reloading:
 - Spacing uses the --pt-gap-\* tokens; keep section, row, and rail rhythm consistent.
 - Any name, path, focus, or meta line that can overflow must be single-line ellipsized with a title or accessible tooltip. Do not let a row reflow or grow unpredictably.
 - Action buttons are 30px high, use icon + label by default, and have a visible :focus-visible ring. Icon-only actions need an aria-label and title.
+- The coordination switch is a slider: a button with role=switch and aria-checked, a 34x20 track and a 16px thumb. Never a checkbox input; the read-only test counts input/select/textarea and requires zero.
 - Section and rail headers use the shared Icon component; status dots use one vocabulary; active dots may pulse only with a prefers-reduced-motion off switch.
 - Keep the project rail and session rows stable in height; text length must not change the layout of neighboring rows.
 
@@ -219,8 +233,8 @@ Before reporting completion:
 1. node --check passes for every changed .js/.mjs file.
 2. node --test test/store.test.mjs passes.
 3. node test/host-smoke.mjs passes.
-4. node test/ui-flow.cjs reports CONTROLS 0, HAS_PROJECTS true, HAS_TIMELINE true, and no console errors.
-5. node bin/dsh-parallel.mjs claims reports no active claims, or every remaining claim is intentional and explained.
+4. node test/ui-flow.cjs reports CONTROLS 0, SWITCHES 1, HAS_PROJECTS true, HAS_TIMELINE true, and no console errors. When it prints SWITCH_STATE unavailable, the running host predates the coordination route: restart the host and rerun before calling the UI verified.
+5. node bin/dsh-god-view.mjs claims reports no active claims, or every remaining claim is intentional and explained.
 6. Screenshots are refreshed when UI changed.
 7. README.md, README.en.md, and docs/protocol.md reflect the final behavior.
 8. No message/inbox/question code has been reintroduced.

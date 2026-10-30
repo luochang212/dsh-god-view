@@ -5,7 +5,7 @@ description: Read when changing lease acquisition, renewal, release, expiry, the
 raised-by: agent
 decided-by: human
 created: 2026-10-30
-paths: [lib/store.js, lib/index.js, bin/dsh-parallel.mjs]
+paths: [lib/store.js, lib/index.js, bin/dsh-god-view.mjs]
 ---
 
 # ADR: 7 Use short-lived auto leases plus explicit planned leases

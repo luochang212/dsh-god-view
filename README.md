@@ -3,9 +3,9 @@
   <a href="README.en.md"><img src="https://img.shields.io/badge/-English-A31F34?style=for-the-badge" alt="English" /></a>
 </div>
 
-# Agent 协作台
+# 上帝视角
 
-**dsh-parallel** · 多 Agent 协作看板 / DSH plugin
+**dsh-god-view** · 多 Agent 协作看板 / DSH plugin
 
 <p>
   <img src="https://img.shields.io/badge/version-0.3.0-0e7490?style=flat-square" alt="version" />
@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/DSH-plugin-0e7490?style=flat-square" alt="DSH plugin" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
-  <a href="https://github.com/luochang212/dsh-parallel/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-parallel/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 **让同一仓库里的多个 Agent 看得见彼此，不抢同一个文件，并且留下可回看的占用时间轴。**
@@ -25,10 +25,22 @@
 - 什么时候占用、什么时候释放、被谁占用（claim/release timeline）。
 
 <p align="center">
-  <img src="screenshots/01-panel.png" alt="Agent 协作台：项目侧边栏与占用甘特图" width="100%" />
+  <img src="screenshots/01-panel.png" alt="上帝视角：项目侧边栏与占用甘特图" width="100%" />
 </p>
 
 _界面示意（演示数据）。_
+
+## 🔌 默认关闭，需要时才打开
+
+协作只有在你同时跑两个以上 Agent 时才有意义，所以它**默认是关的**。
+
+关闭时插件什么都不做：不建看板目录、不写 presence、不占用文件、不拦截写入、也不往 prompt 里塞上下文。单 Agent 时你可以随意编辑，没有任何额外开销。
+
+准备跑并行时，点面板右上角的**协作开关**（面板上唯一的控件）。从这一刻开始，写入会自动登记占用，别人占用中的文件会被拒绝。
+
+- 中途打开是可以的：打开之前已经在改的文件不会被补登记，保护从下一次写入开始。
+- 关闭会释放本机持有的自动占用，历史记录保留但不再更新。
+- 它不会自己打开。即使插件看到多个会话在跑，也只会在面板上提示你。
 
 ## ✨ 它解决什么问题
 
@@ -38,7 +50,7 @@ _界面示意（演示数据）。_
 - 同时改同一个文件，后写覆盖先写；
 - 做完之后，说不清谁在什么时候动过哪个文件。
 
-Agent 协作台只做三件事：
+上帝视角只做三件事：
 
 | 能力              | 说明                                        |
 | ----------------- | ------------------------------------------- |
@@ -91,7 +103,7 @@ claim 是精确到文件路径的，不支持目录或 glob。
 
 - **左侧项目栏**：全高、固定；项目按活跃 / 空闲分组，显示统一状态灯、活跃会话数、占用数、进行中 change 数、最后活动时间；底部固定显示当前项目的活跃会话 / 文件占用统计。活跃状态灯有轻微呼吸灯，reduced-motion 下自动关闭。
 - **右侧详情区**：当前项目路径、会话列表、占用甘特图、可展开的精确事件明细；详情区独立滚动，左侧栏和底部统计不跟着走。甘特条支持 hover / 键盘 focus 的定位 tooltip，直接显示文件、持有者、起止时间、持续时长和 intent/summary。
-- **没有输入框**：没有 composer，没有消息框，没有“回复/释放”按钮。项目行是导航按钮，刷新是唯一的 action button。
+- **没有输入框**：没有 composer，没有消息框，没有“回复/释放”按钮。项目行是导航按钮，标题栏上的协作滑块是唯一的控件。
 
 界面规则：字号和间距使用统一刻度；名称、路径、focus 等可能超长的内容单行省略，完整值放在 title / tooltip；操作按钮 30px 高，优先图标 + 文字；状态灯、分组和 section 标题全站共用同一套样式。
 
@@ -106,7 +118,7 @@ claim 是精确到文件路径的，不支持目录或 glob。
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel"
+ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
 ```
 
 ### 2. 添加插件配置
@@ -115,8 +127,8 @@ ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel"
 
 ```yaml
 - insert:
-    - id: dsh-parallel
-      name: dsh-parallel
+    - id: dsh-god-view
+      name: dsh-god-view
       config:
         heartbeatMs: 15000
         ttlMs: 60000
@@ -129,7 +141,7 @@ root 留空即可。每个 Agent 会按自己的 session cwd 找到对应仓库�
 
 ### 3. 重启并打开
 
-重启 DSH host，刷新页面，点击左侧边栏的 **协作台 / Agents**。
+重启 DSH host，刷新页面，点击左侧边栏的 **上帝视角 / God's Eye**。
 
 同一台 DSH 上所有被插件跟踪过的项目会出现在左侧项目栏；没有用插件打开过的项目不会自动出现。
 
@@ -146,14 +158,14 @@ root 留空即可。每个 Agent 会按自己的 session cwd 找到对应仓库�
 CLI 与插件共用同一套文件：
 
 ```sh
-node bin/dsh-parallel.mjs join    --name reviewer --focus "reviewing the guard"
-node bin/dsh-parallel.mjs status  --id <id> --focus "reading the claim timeline"
-node bin/dsh-parallel.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
-node bin/dsh-parallel.mjs release --id <id> --paths lib/store.js --summary "done"
-node bin/dsh-parallel.mjs claims
-node bin/dsh-parallel.mjs changes
-node bin/dsh-parallel.mjs list
-node bin/dsh-parallel.mjs leave --id <id>
+node bin/dsh-god-view.mjs join    --name reviewer --focus "reviewing the guard"
+node bin/dsh-god-view.mjs status  --id <id> --focus "reading the claim timeline"
+node bin/dsh-god-view.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
+node bin/dsh-god-view.mjs release --id <id> --paths lib/store.js --summary "done"
+node bin/dsh-god-view.mjs claims
+node bin/dsh-god-view.mjs changes
+node bin/dsh-god-view.mjs list
+node bin/dsh-god-view.mjs leave --id <id>
 ```
 
 ## 📦 数据布局

@@ -1,7 +1,7 @@
 {
-  "name": "dsh-parallel",
+  "name": "dsh-god-view",
   "version": "0.3.0",
-  "description": "Per-repo presence, file leases, claim/release Gantt, and a global recent-project index for parallel agents",
+  "description": "上帝视角 (God's Eye View) — per-repo presence, file leases, claim/release Gantt, and a global recent-project index for parallel agents, off by default behind one switch",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -11,7 +11,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "dsh-parallel": "./bin/dsh-parallel.mjs"
+    "dsh-god-view": "./bin/dsh-god-view.mjs"
   },
   "dsh": {
     "client": {
@@ -58,10 +58,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/luochang212/dsh-parallel.git"
+    "url": "https://github.com/luochang212/dsh-god-view.git"
   },
-  "homepage": "https://github.com/luochang212/dsh-parallel#readme",
+  "homepage": "https://github.com/luochang212/dsh-god-view#readme",
   "bugs": {
-    "url": "https://github.com/luochang212/dsh-parallel/issues"
+    "url": "https://github.com/luochang212/dsh-god-view/issues"
   }
 }

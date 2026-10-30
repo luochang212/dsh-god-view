@@ -74,10 +74,27 @@ function makeAgent(id) {
 }
 const alice = makeAgent('session-alice-123456');
 const bob = makeAgent('session-bob-654321');
-emit('agent/created', { agent: alice });
-emit('agent/created', { agent: bob });
 const aliceId = S.agentIdForSession('session-alice-123456');
 const bobId = S.agentIdForSession('session-bob-654321');
+
+// Default is off: the host keeps sessions in memory, writes nothing, blocks nothing.
+emit('agent/created', { agent: alice });
+assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writes no board');
+const pre = handlers.get('tools/pre-execute')[0];
+assert.ok(pre, 'pre-execute guard registered');
+let offOut = await tools.get('team_status').execute({ focus: 'dormant' }, { agent: alice });
+assert.match(offOut.text, /Coordination is off/);
+const offDecision = await pre({ name: 'write', agent: alice, arguments: { file_path: 'src/off.ts' } }, async () => ({
+  kind: 'allow',
+}));
+assert.equal(offDecision.kind, 'allow', 'a dormant host does not block writes');
+assert.equal(S.getClaim(repo, 'src/off.ts'), undefined, 'a dormant host records no lease');
+assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writes no board while working');
+
+// Turn coordination on; every later assertion exercises the enabled path.
+S.writeCoordination(registry, true);
+emit('agent/created', { agent: alice });
+emit('agent/created', { agent: bob });
 
 const status = tools.get('team_status');
 const roster = tools.get('team_roster');
@@ -94,8 +111,6 @@ out = await roster.execute({}, { agent: bob });
 assert.match(out.text, /Parallel team/);
 assert.match(out.text, /wiring the panel/);
 
-const pre = handlers.get('tools/pre-execute')[0];
-assert.ok(pre, 'pre-execute guard registered');
 const allow = { kind: 'allow' };
 let decision = await pre({ name: 'write', agent: alice, arguments: { file_path: 'src/auto.ts' } }, async () => allow);
 assert.equal(decision.kind, 'allow');
@@ -140,7 +155,7 @@ S.registerProject(registry, { root: second });
 const server = http.createServer((req, res) => httpHandler(req, res));
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const { port } = server.address();
-const base = 'http://127.0.0.1:' + port + '/plugins/dsh-parallel/api';
+const base = 'http://127.0.0.1:' + port + '/plugins/dsh-god-view/api';
 let response = await fetch(base + '/projects');
 assert.equal(response.status, 200);
 let projects = await response.json();
@@ -172,6 +187,35 @@ response = await fetch(base + '/release', {
 });
 assert.equal(response.status, 200);
 assert.equal(S.getClaim(repo, 'src/http.ts'), undefined);
+
+// The panel switch flips the whole mode off and on through HTTP.
+response = await fetch(base + '/coordination');
+assert.equal(response.status, 200);
+let coordination = await response.json();
+assert.equal(coordination.enabled, true);
+assert.equal(coordination.trackedSessions, 3);
+
+response = await fetch(base + '/coordination', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ enabled: false }),
+});
+assert.equal(response.status, 200);
+coordination = await response.json();
+assert.equal(coordination.enabled, false);
+assert.equal((await (await fetch(base + '/coordination')).json()).enabled, false);
+decision = await pre({ name: 'write', agent: bob, arguments: { file_path: 'src/while-off.ts' } }, async () => allow);
+assert.equal(decision.kind, 'allow', 'switching off stops blocking writes');
+assert.equal(S.getClaim(repo, 'src/while-off.ts'), undefined, 'switching off records no lease');
+snapshot = await (await fetch(base + '/state?root=' + encodeURIComponent(repo))).json();
+assert.equal(snapshot.coordination.enabled, false);
+
+response = await fetch(base + '/coordination', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ enabled: true }),
+});
+assert.equal((await response.json()).enabled, true);
 
 const cross = await fetch(base + '/state', { headers: { origin: 'http://evil.example' } });
 assert.equal(cross.status, 403);

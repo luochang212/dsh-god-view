@@ -115,7 +115,22 @@ Lifecycle:
 
 Release accepts a summary. Expiry uses lease expired. The timeline is capped at 200 events per change.
 
+## Coordination switch
+
+Coordination is off by default. The switch is a single global file in the registry directory:
+
+```json
+{ "version": 1, "enabled": false, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
+```
+
+- **Off (default, or file missing/unreadable):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can list repositories and offer the switch.
+- **On:** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
+- Turning it on backfills presence for tracked sessions. Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire.
+- The switch never flips itself. A host that sees several sessions while off only reports that in the panel.
+
 ## Write guard
+
+Step 0: the guard only runs while the coordination switch is on.
 
 With claimPolicy: auto:
 
@@ -155,16 +170,20 @@ Projects are sorted by last activity. Selecting a project only changes which boa
 
 ## HTTP surface
 
-| Method | Path              | Body                             | Result                         |
-| ------ | ----------------- | -------------------------------- | ------------------------------ |
-| GET    | /health           | -                                | ok, pid, current root          |
-| GET    | /projects         | -                                | recent projects and status     |
-| GET    | /state?root=<abs> | -                                | agents, claims, changes, stats |
-| POST   | /presence         | root, id, patch                  | update presence                |
-| POST   | /claim            | root, agent, paths, mode, reason | claim or conflicts             |
-| POST   | /release          | root, agent, paths, force        | release and change state       |
+| Method | Path              | Body                             | Result                          |
+| ------ | ----------------- | -------------------------------- | ------------------------------- |
+| GET    | /health           | -                                | ok, pid, current root           |
+| GET    | /projects         | -                                | recent projects and status      |
+| GET    | /state?root=<abs> | -                                | agents, claims, changes, stats  |
+| GET    | /coordination     | -                                | enabled, trackedSessions, roots |
+| POST   | /coordination     | enabled                          | flip the switch                 |
+| POST   | /presence         | root, id, patch                  | update presence                 |
+| POST   | /claim            | root, agent, paths, mode, reason | claim or conflicts              |
+| POST   | /release          | root, agent, paths, force        | release and change state        |
 
-The panel never mutates the board. The routes exist for the host and CLI; cross-origin requests are denied.
+/state also returns `coordination: { enabled, trackedSessions, roots }`.
+
+The panel never mutates a board. Its only write is POST /coordination, which flips the global switch in the registry directory. The other routes exist for the host and CLI; cross-origin requests are denied.
 
 ## v2 to v3
 

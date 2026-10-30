@@ -143,7 +143,7 @@ test('concurrent processes create agents and claims without corruption', async (
 
 test('CLI claim conflict and release timeline', () => {
   const root = repo();
-  const cli = path.resolve('bin/dsh-parallel.mjs');
+  const cli = path.resolve('bin/dsh-god-view.mjs');
   const a = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'a'], { encoding: 'utf8' });
   const b = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'b'], { encoding: 'utf8' });
   const aid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(a.stdout)[1].trim();
@@ -175,7 +175,7 @@ test('CLI claim conflict and release timeline', () => {
 
 test('CLI status done and leave release owned claims', () => {
   const root = repo();
-  const cli = path.resolve('bin/dsh-parallel.mjs');
+  const cli = path.resolve('bin/dsh-god-view.mjs');
   const join = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'a'], { encoding: 'utf8' });
   const aid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(join.stdout)[1].trim();
   assert.equal(
@@ -215,4 +215,25 @@ test('CLI status done and leave release owned claims', () => {
     spawnSync(process.execPath, [cli, 'changes', '--repo', root], { encoding: 'utf8' }).stdout,
     /agent left/,
   );
+});
+test('coordination is off by default and the switch persists in the registry dir', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-switch-'));
+  assert.equal(S.readCoordination(dir).enabled, false);
+  const on = S.writeCoordination(dir, true, { now: 1000 });
+  assert.equal(on.enabled, true);
+  assert.equal(S.readCoordination(dir).enabled, true);
+  S.writeCoordination(dir, false, { now: 2000 });
+  assert.equal(S.readCoordination(dir).enabled, false);
+  fs.writeFileSync(path.join(dir, 'state.json'), 'not json');
+  assert.equal(S.readCoordination(dir).enabled, false);
+});
+
+test('reading a board that does not exist creates nothing', () => {
+  const root = repo();
+  const snap = S.snapshot(root);
+  assert.equal(snap.stats.agents, 0);
+  assert.equal(fs.existsSync(path.join(root, '.dsh')), false);
+  const summary = S.projectSummary(root);
+  assert.equal(summary.agents, 0);
+  assert.equal(fs.existsSync(path.join(root, '.dsh')), false);
 });

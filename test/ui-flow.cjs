@@ -50,9 +50,10 @@ const fs = require('node:fs');
   }
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  await page.locator('button[aria-label="协作台"]').first().click();
+  await page.locator('button[aria-label="上帝视角"]').first().click();
   await page.waitForTimeout(1500);
-  const target = page.locator('.pt-project', { hasText: 'dsh-parallel' }).first();
+  // The board is named after the repository directory, which need not match the package name.
+  const target = page.locator('.pt-project', { hasText: path.basename(process.cwd()) }).first();
   if (await target.count()) {
     await target.click();
     await page.waitForTimeout(900);
@@ -60,16 +61,43 @@ const fs = require('node:fs');
   fs.mkdirSync('screenshots/local', { recursive: true });
 
   const controls = await page.locator('.pt-root input, .pt-root select, .pt-root textarea').count();
+  const switches = page.locator('.pt-root [role="switch"]');
+  const switchCount = await switches.count();
   const text = await page.locator('.pt-root').innerText();
   console.log('CONTROLS', controls);
+  console.log('SWITCHES', switchCount);
   console.log('HAS_PROJECTS', text.includes('最近活跃项目'));
   console.log('HAS_TIMELINE', text.includes('占用甘特图'));
   console.log('HAS_SESSION', text.includes('session'));
   console.log('TEXT >>>');
   console.log(text.slice(0, 2400));
   console.log('<<< TEXT');
-  if (controls !== 0) throw new Error('read-only panel must not contain inputs/selects/textareas');
+  if (controls !== 0) throw new Error('the read-only panel must not contain inputs/selects/textareas');
+  if (switchCount !== 1) throw new Error('the panel must expose exactly one coordination switch');
   if (!text.includes('最近活跃项目') || !text.includes('占用甘特图')) throw new Error('projects/gantt section missing');
+
+  // The switch is the only control, and it must actually flip and come back.
+  const switchState = await switches.first().getAttribute('data-coordination');
+  console.log('SWITCH_STATE', switchState);
+  if (switchState === 'unavailable') {
+    // The refreshed client is newer than the running host process.
+    console.log('SWITCH_FLIP_SKIPPED', 'restart the host to load /coordination');
+  } else {
+    // The control is a slider: its position, not its text, carries the state.
+    const switchValue = async () => await switches.first().getAttribute('aria-checked');
+    const before = await switchValue();
+    await switches.first().click();
+    await page.waitForTimeout(1400);
+    const after = await switchValue();
+    await switches.first().click();
+    await page.waitForTimeout(1400);
+    const restored = await switchValue();
+    console.log('SWITCH_BEFORE', before);
+    console.log('SWITCH_AFTER', after);
+    console.log('SWITCH_RESTORED', restored);
+    if (before === after) throw new Error('the coordination switch did not change state');
+    if (restored !== before) throw new Error('the coordination switch did not return to its original state');
+  }
 
   const layout = await page.evaluate(() => {
     const main = document.querySelector('.pt-main');

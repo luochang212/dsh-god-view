@@ -3,9 +3,9 @@
   <a href="README.en.md"><img src="https://img.shields.io/badge/-English-A31F34?style=for-the-badge" alt="English" /></a>
 </div>
 
-# Agent Team
+# God's Eye View
 
-**dsh-parallel** · a read-only DSH board for parallel agents
+**dsh-god-view** · a read-only DSH board for parallel agents
 
 <p>
   <img src="https://img.shields.io/badge/version-0.3.0-0e7490?style=flat-square" alt="version" />
@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/DSH-plugin-0e7490?style=flat-square" alt="DSH plugin" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
-  <a href="https://github.com/luochang212/dsh-parallel/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-parallel/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 **Let multiple agents in one repository see each other, avoid editing the same file at the same time, and leave a reviewable occupancy timeline.**
@@ -25,10 +25,22 @@ It is not a chat tool and not a human control panel. It is a read-only coordinat
 - when it was claimed, when it was released, and by whom (a claim/release timeline).
 
 <p align="center">
-  <img src="screenshots/01-panel.png" alt="Agent Team: project rail and claim Gantt" width="100%" />
+  <img src="screenshots/01-panel.png" alt="God's Eye View: project rail and claim Gantt" width="100%" />
 </p>
 
 _UI illustration with demo data._
+
+## 🔌 Off by default, on when you need it
+
+Coordination only pays off when two or more agents work at once, so it is **off by default**.
+
+While it is off the plugin does nothing: no board directory, no presence rows, no file leases, no write guard, and no prompt context. A single agent edits at full speed with no overhead.
+
+When you are about to run a team, flip the **coordination switch** in the panel header — the panel's only control. From that moment writes register leases and a file held by someone else is rejected.
+
+- Turning it on mid-flight is fine: files already being edited are not back-claimed, and protection starts at the next write.
+- Turning it off releases the automatic leases this host holds and freezes the history instead of deleting it.
+- It never turns itself on. If the host sees several sessions while it is off, the panel says so and waits for you.
 
 ## ✨ What it solves
 
@@ -38,7 +50,7 @@ When several agents work in one repository, the hard part is usually not writing
 - editing the same file and overwriting each other;
 - being unable to say who touched which file, and when.
 
-Agent Team does exactly three things:
+God's Eye View does exactly three things:
 
 | Capability        | What it does                                               |
 | ----------------- | ---------------------------------------------------------- |
@@ -91,7 +103,7 @@ One read-only screen, split into a master-detail layout:
 
 - **Project rail (left)**: full height, fixed; projects grouped into Active / Idle, with one shared status-dot vocabulary, active sessions, claims, active changes, and last activity. The selected project's session and file counts sit in a footer at the bottom. Active dots pulse subtly and stop under reduced-motion.
 - **Detail pane (right)**: project path, sessions, claim Gantt, and a collapsible exact-time event list. The detail pane scrolls independently, so the rail and its footer stay put. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary.
-- **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; Refresh is the only action button.
+- **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; the coordination slider in the header is the only control.
 
 UI rules: type and spacing use one shared scale; any name, path, or focus that can overflow is single-line ellipsized with the full value in a title/tooltip; action buttons are 30px high and prefer icon + label; status dots, groups, and section headers share one vocabulary.
 
@@ -106,7 +118,7 @@ On narrow screens the project rail becomes a horizontal scrollable list above th
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-parallel "$PROFILE/node_modules/dsh-parallel"
+ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
 ```
 
 ### 2. Add the plugin config
@@ -115,8 +127,8 @@ Append this to $PROFILE/cordis.patch.yml:
 
 ```yaml
 - insert:
-    - id: dsh-parallel
-      name: dsh-parallel
+    - id: dsh-god-view
+      name: dsh-god-view
       config:
         heartbeatMs: 15000
         ttlMs: 60000
@@ -146,14 +158,14 @@ The runtime exposes exactly three tools:
 The CLI shares the same files:
 
 ```sh
-node bin/dsh-parallel.mjs join    --name reviewer --focus "reviewing the guard"
-node bin/dsh-parallel.mjs status  --id <id> --focus "reading the claim timeline"
-node bin/dsh-parallel.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
-node bin/dsh-parallel.mjs release --id <id> --paths lib/store.js --summary "done"
-node bin/dsh-parallel.mjs claims
-node bin/dsh-parallel.mjs changes
-node bin/dsh-parallel.mjs list
-node bin/dsh-parallel.mjs leave --id <id>
+node bin/dsh-god-view.mjs join    --name reviewer --focus "reviewing the guard"
+node bin/dsh-god-view.mjs status  --id <id> --focus "reading the claim timeline"
+node bin/dsh-god-view.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
+node bin/dsh-god-view.mjs release --id <id> --paths lib/store.js --summary "done"
+node bin/dsh-god-view.mjs claims
+node bin/dsh-god-view.mjs changes
+node bin/dsh-god-view.mjs list
+node bin/dsh-god-view.mjs leave --id <id>
 ```
 
 ## 📦 Data layout

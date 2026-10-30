@@ -1,10 +1,10 @@
-# Add dsh-parallel to a DSH profile.
+# Add dsh-god-view to a DSH profile.
 # 1. Install the package into the profile (or symlink it into node_modules).
 # 2. Append this row to <profile>/cordis.patch.yml.
 # 3. Reload the profile; refresh the page to load the browser half.
 - insert:
-    - id: dsh-parallel
-      name: dsh-parallel
+    - id: dsh-god-view
+      name: dsh-god-view
       config:
         # Optional. Empty means each session uses its own cwd/repo board.
         root: ''

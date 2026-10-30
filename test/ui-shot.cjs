@@ -50,9 +50,10 @@ const fs = require('node:fs');
   }
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  await page.locator('button[aria-label="协作台"]').first().click();
+  await page.locator('button[aria-label="上帝视角"]').first().click();
   await page.waitForTimeout(1500);
-  const target = page.locator('.pt-project', { hasText: 'dsh-parallel' }).first();
+  // The board is named after the repository directory, which need not match the package name.
+  const target = page.locator('.pt-project', { hasText: path.basename(process.cwd()) }).first();
   if (await target.count()) {
     await target.click();
     await page.waitForTimeout(900);
