@@ -67,7 +67,7 @@ const fs = require('node:fs');
   const hasActiveRows = (await page.locator('.pt-project').count()) > 0;
   console.log('CONTROLS', controls);
   console.log('SWITCHES', switchCount);
-  console.log('HAS_PROJECTS', text.includes('活跃项目'));
+  console.log('HAS_PROJECTS', hasActiveRows);
   console.log('HAS_TIMELINE', text.includes('占用甘特图'));
   console.log('ACTIVE_ROWS', hasActiveRows);
   console.log('HAS_WORKING', text.includes('进行中'));
@@ -77,7 +77,7 @@ const fs = require('node:fs');
   console.log('<<< TEXT');
   if (controls !== 0) throw new Error('the read-only panel must not contain inputs/selects/textareas');
   if (switchCount !== 1) throw new Error('the panel must expose exactly one coordination switch');
-  if (!text.includes('活跃项目')) throw new Error('project rail caption missing');
+  if (!hasActiveRows) throw new Error('the rail rendered no project rows');
   if (hasActiveRows && !text.includes('占用甘特图')) throw new Error('gantt section missing for an active project');
 
   // The switch is the only control, and it must actually flip and come back.
@@ -106,31 +106,34 @@ const fs = require('node:fs');
   const layout = await page.evaluate(() => {
     const root = document.querySelector('.pt-root');
     const side = document.querySelector('.pt-side');
-    const foot = document.querySelector('.pt-side-foot');
     const topbar = document.querySelector('.pt-topbar');
     const content = document.querySelector('.pt-content');
-    if (!root || !side || !foot || !topbar || !content) return null;
-    const before = foot.getBoundingClientRect().bottom - side.getBoundingClientRect().bottom;
+    if (!root || !side || !topbar || !content) return null;
     content.scrollTop = content.scrollHeight;
-    const after = foot.getBoundingClientRect().bottom - side.getBoundingClientRect().bottom;
     const contentScrolls = content.scrollHeight > content.clientHeight;
     content.scrollTop = 0;
     const railFullHeight = Math.abs(side.getBoundingClientRect().height - root.getBoundingClientRect().height) <= 1;
+    const children = Array.from(side.children);
     return {
-      grounded: Math.abs(before) <= 1 && Math.abs(after) <= 1,
       contentScrolls,
       railFullHeight,
+      chrome: document.querySelectorAll('.pt-side-head, .pt-side-foot, .pt-side-count').length,
+      railChildren: children.length,
+      railChildClass: children.length === 1 ? String(children[0].className) : '',
       topbarHeight: Math.round(topbar.getBoundingClientRect().height),
       railWidth: Math.round(side.getBoundingClientRect().width),
     };
   });
-  console.log('SIDEBAR_GROUNDED', Boolean(layout && layout.grounded));
+  console.log('RAIL_CHROME', layout && layout.chrome);
+  console.log('RAIL_CHILDREN', layout && layout.railChildren, layout && layout.railChildClass);
   console.log('RAIL_FULL_HEIGHT', Boolean(layout && layout.railFullHeight));
   console.log('CONTENT_SCROLLS', Boolean(layout && layout.contentScrolls));
   console.log('RAIL_WIDTH', layout && layout.railWidth);
   console.log('TOPBAR_HEIGHT', layout && layout.topbarHeight);
-  if (!layout || !layout.grounded)
-    throw new Error('sidebar footer must stay at the rail bottom while the detail pane scrolls');
+  if (!layout) throw new Error('panel layout did not render');
+  if (layout.chrome !== 0) throw new Error('the rail must carry no header, count or footer');
+  if (layout.railChildren !== 1 || !layout.railChildClass.includes('pt-projects'))
+    throw new Error('the rail must contain only the project list');
   if (!layout.railFullHeight) throw new Error('the project rail must reach the bottom of the panel');
   if (layout.topbarHeight !== 56) throw new Error('the topbar must render at 56px');
   if (layout.railWidth !== 264) throw new Error('the project rail must render at 264px');
@@ -143,28 +146,33 @@ const fs = require('node:fs');
     return {
       sideLeft: Math.round(side.getBoundingClientRect().left),
       mainRight: Math.round(main.getBoundingClientRect().right),
-      toggles: document.querySelectorAll('.pt-iconbtn').length,
+      toggles: document.querySelectorAll('.pt-rail-toggle').length,
     };
   });
   console.log('RAIL_ON_RIGHT', Boolean(sides && sides.sideLeft >= sides.mainRight - 1));
   console.log('RAIL_TOGGLE', sides && sides.toggles);
   if (!sides || sides.sideLeft < sides.mainRight - 1) throw new Error('the rail must sit on the right side');
-  if (sides.toggles !== 1) throw new Error('the topbar must carry exactly one rail toggle');
+  if (sides.toggles !== 1) throw new Error('the panel must carry exactly one pinned rail toggle');
 
-  // Collapsing goes to zero, and the toggle restores it.
-  const toggle = page.locator('.pt-iconbtn').first();
-  const railBefore = await page.locator('.pt-side').count();
+  // The toggle is pinned: collapsing must not move it, so the same spot reopens.
+  const toggle = page.locator('.pt-rail-toggle').first();
+  const openBox = await toggle.boundingBox();
   await toggle.click();
   await page.waitForTimeout(400);
-  const railHidden = await page.locator('.pt-side').count();
+  const closedBox = await toggle.boundingBox();
   const expanded = await toggle.getAttribute('aria-expanded');
+  const railHidden = await page.locator('.pt-side').count();
+  console.log('TOGGLE_PINNED', JSON.stringify(openBox), JSON.stringify(closedBox));
+  console.log('RAIL_COLLAPSE', railHidden, expanded);
+  if (!openBox || !closedBox) throw new Error('rail toggle is not visible');
+  if (Math.abs(openBox.x - closedBox.x) > 1 || Math.abs(openBox.y - closedBox.y) > 1)
+    throw new Error('the rail toggle must stay in place when the rail collapses');
+  if (railHidden !== 0) throw new Error('the rail must collapse to zero');
+  if (expanded !== 'false') throw new Error('the toggle must report the collapsed state');
   await toggle.click();
   await page.waitForTimeout(400);
   const railBack = await page.locator('.pt-side').count();
-  console.log('RAIL_COLLAPSE', railBefore, railHidden, railBack, expanded);
-  if (railBefore !== 1 || railHidden !== 0 || railBack !== 1)
-    throw new Error('the rail must collapse to zero and restore');
-  if (expanded !== 'false') throw new Error('the toggle must report the collapsed state');
+  if (railBack !== 1) throw new Error('the toggle must reopen the rail from the same spot');
 
   await page.screenshot({ path: 'screenshots/local/01-panel.png', fullPage: false });
   await page.evaluate(() => document.body.setAttribute('data-ds-dark-theme', ''));
