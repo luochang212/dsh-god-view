@@ -71,6 +71,23 @@ const fs = require('node:fs');
   if (controls !== 0) throw new Error('read-only panel must not contain inputs/selects/textareas');
   if (!text.includes('最近活跃项目') || !text.includes('占用甘特图')) throw new Error('projects/gantt section missing');
 
+  const layout = await page.evaluate(() => {
+    const main = document.querySelector('.pt-main');
+    const side = document.querySelector('.pt-side');
+    const foot = document.querySelector('.pt-side-foot');
+    if (!main || !side || !foot) return null;
+    const before = foot.getBoundingClientRect().bottom - side.getBoundingClientRect().bottom;
+    main.scrollTop = main.scrollHeight;
+    const after = foot.getBoundingClientRect().bottom - side.getBoundingClientRect().bottom;
+    const mainScrolls = main.scrollHeight > main.clientHeight;
+    main.scrollTop = 0;
+    return { grounded: Math.abs(before) <= 1 && Math.abs(after) <= 1, mainScrolls };
+  });
+  console.log('SIDEBAR_GROUNDED', Boolean(layout && layout.grounded));
+  console.log('MAIN_SCROLLS', Boolean(layout && layout.mainScrolls));
+  if (!layout || !layout.grounded)
+    throw new Error('sidebar footer must stay at the rail bottom while the detail pane scrolls');
+
   await page.screenshot({ path: 'screenshots/local/01-panel.png', fullPage: false });
   await page.evaluate(() => document.body.setAttribute('data-ds-dark-theme', ''));
   await page.waitForTimeout(500);

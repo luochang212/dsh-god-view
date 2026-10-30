@@ -181,7 +181,7 @@ Reloading:
 - One active change per agent. A new claim joins the active change; release the old change before starting a new one.
 - Auto claims release on idle. Explicit claims need an explicit release or TTL expiry. If a claim looks stale, check whether the owning session is still running before forcing a release.
 - Focus and claims are separate. A file is not leased just because it appears in focus or files.
-- The project rail is full-height and sticky. The project list scrolls; the footer stays at the bottom.
+- The project rail is full-height and fixed; the detail pane is the scroll container. The project list scrolls independently; the footer stays at the bottom of the rail, never below the viewport.
 - The rail must show status at a glance: dot, name, active/claims/active-change counts, last activity.
 - Keep the read-only control count at zero. The UI test asserts controls = 0.
 - A page refresh is required after client changes; a host reload is required after lib/index.js changes.
