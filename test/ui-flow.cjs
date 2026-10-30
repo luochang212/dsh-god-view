@@ -114,9 +114,16 @@ const fs = require('node:fs');
     content.scrollTop = 0;
     const railFullHeight = Math.abs(side.getBoundingClientRect().height - root.getBoundingClientRect().height) <= 1;
     const children = Array.from(side.children);
+    const toggle = document.querySelector('.pt-rail-toggle');
+    const firstRow = side.querySelector('.pt-project');
+    const railTopGap =
+      toggle && firstRow
+        ? Math.round(firstRow.getBoundingClientRect().top - toggle.getBoundingClientRect().bottom)
+        : null;
     return {
       contentScrolls,
       railFullHeight,
+      railTopGap,
       chrome: document.querySelectorAll('.pt-side-head, .pt-side-foot, .pt-side-count').length,
       railChildren: children.length,
       railChildClass: children.length === 1 ? String(children[0].className) : '',
@@ -127,6 +134,7 @@ const fs = require('node:fs');
   console.log('RAIL_CHROME', layout && layout.chrome);
   console.log('RAIL_CHILDREN', layout && layout.railChildren, layout && layout.railChildClass);
   console.log('RAIL_FULL_HEIGHT', Boolean(layout && layout.railFullHeight));
+  console.log('RAIL_TOP_GAP', layout && layout.railTopGap);
   console.log('CONTENT_SCROLLS', Boolean(layout && layout.contentScrolls));
   console.log('RAIL_WIDTH', layout && layout.railWidth);
   console.log('TOPBAR_HEIGHT', layout && layout.topbarHeight);
@@ -135,6 +143,8 @@ const fs = require('node:fs');
   if (layout.railChildren !== 1 || !layout.railChildClass.includes('pt-projects'))
     throw new Error('the rail must contain only the project list');
   if (!layout.railFullHeight) throw new Error('the project rail must reach the bottom of the panel');
+  if (layout.railTopGap === null || layout.railTopGap < 12)
+    throw new Error('the first project row must clear the pinned rail toggle');
   if (layout.topbarHeight !== 56) throw new Error('the topbar must render at 56px');
   if (layout.railWidth !== 264) throw new Error('the project rail must render at 264px');
 
