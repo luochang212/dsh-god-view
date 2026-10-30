@@ -177,6 +177,11 @@ test('an open panel follows a runtime locale change without a reload', () => {
   assert.equal(plugin.lastEntry('sidebar.panellist').options.label, '上帝视角', 'sidebar label returns to Chinese');
 });
 
+test('the read-only panel names claims and releases, never replies', () => {
+  assert.doesNotMatch(SOURCE, /\breply\b/i, 'the client must not reintroduce a reply concept (ADR 2)');
+  assert.doesNotMatch(SOURCE, /回复/);
+});
+
 test('the panel exposes one coordination switch that posts the new mode', () => {
   const calls = [];
   const board = {

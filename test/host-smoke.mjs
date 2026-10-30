@@ -169,6 +169,8 @@ assert.equal(snapshot.root, repo);
 assert.equal(snapshot.stats.agents, 3);
 assert.equal(snapshot.protocol, 3);
 assert.equal('messages' in snapshot, false);
+assert.equal(path.basename(snapshot.cliPath), 'dsh-god-view.mjs', 'the advertised CLI is the renamed binary');
+assert.ok(fs.existsSync(snapshot.cliPath), 'the CLI path the host advertises exists on disk');
 
 response = await fetch(base + '/claim', {
   method: 'POST',
