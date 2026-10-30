@@ -71,15 +71,17 @@ const { chromium } = loadPlaywright();
 
   await entry.click();
   await page.waitForTimeout(1200);
-  const title = (await page.locator('.pt-root h1').first().innerText()).trim();
-  assert.equal(title, '上帝视角', 'panel follows the Host locale');
+  const railLabel = await page.locator('.pt-side').first().getAttribute('aria-label');
+  assert.equal(railLabel, '活跃项目', 'panel follows the Host locale');
+  const switchLabel = await page.locator('.pt-root [role="switch"]').first().getAttribute('aria-label');
+  assert.equal(switchLabel, '协作开关', 'the switch is labelled in the Host locale');
 
   const htmlLang = await page.evaluate(() => document.documentElement.lang);
   assert.equal(htmlLang, 'zh-CN', 'host document language settled on Chinese');
 
   assert.deepEqual(errors, [], 'no console or page errors');
   console.log('ENTRY', entryLabel);
-  console.log('TITLE', title);
+  console.log('PANEL', railLabel, switchLabel);
   console.log('ERRORS', JSON.stringify(errors));
   await browser.close();
 })().catch((error) => {
