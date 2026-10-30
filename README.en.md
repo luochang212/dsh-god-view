@@ -93,15 +93,17 @@ The UI renders these events as a per-file Gantt chart. A bar runs from claim to 
 
 ## 🖥️ UI
 
-One read-only screen, split into a master-detail layout:
+One read-only screen rendered as a full-bleed app shell (no page padding):
 
-- **Project rail (left)**: full height, fixed; projects grouped into Active / Idle, with one shared status-dot vocabulary, active sessions, claims, active changes, and last activity. The selected project's session and file counts sit in a footer at the bottom. Active dots pulse subtly and stop under reduced-motion.
-- **Detail pane (right)**: project path, sessions, claim Gantt, and a collapsible exact-time event list. The detail pane scrolls independently, so the rail and its footer stay put. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary.
-- **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; the coordination slider in the header is the only control.
+- **Sidebar (left, 232px, full height)**: a brand area at the top (a repo-drawn radiant-eye glyph + God's Eye View) above the Active projects navigation, which lists only projects with a live session or a live lease; idle boards are not rendered. Each row shows the shared status dot, active sessions, claims, active changes, and last activity. The selected project's session and file counts sit in a footer at the bottom. Active dots pulse subtly and stop under reduced-motion.
+- **Topbar (56px)**: the selected project's name and repository path on the left, and a single unlabeled coordination switch on the right (named for screen readers, explained on hover); the coordination-off notice is a slim strip under the topbar.
+- **Content**: scrolls independently — sessions and the claim Gantt. Bars expose a positioned tooltip on hover or keyboard focus with file, actor, start/end, duration, and intent/summary; the full event record stays in the CLI (`dsh-god-view changes`).
+- **When nothing is active**: the page is one quiet blank state — a low-opacity glyph and a single line (projects appear once a session works here; with coordination off it points at the switch). No empty sections, empty Gantt, or dashed placeholders, so the page can be read and left at a glance.
+- **No inputs**: no composer, no message box, no reply/release button. Project rows are navigation buttons; the coordination slider in the topbar is the only control.
 
 UI rules: type and spacing use one shared scale; any name, path, or focus that can overflow is single-line ellipsized with the full value in a title/tooltip; action buttons are 30px high and prefer icon + label; status dots, groups, and section headers share one vocabulary.
 
-On narrow screens the project rail becomes a horizontal scrollable list above the detail pane.
+Below 700px of panel width the shell stacks: the sidebar becomes a horizontal, scrollable project strip above the content.
 
 ## 🚀 Quick start
 
@@ -184,7 +186,7 @@ It stores root / name / lastSeenAt only. Presence, claims, and timelines always 
 
 ## 🧭 Decisions
 
-Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are seven implemented decisions:
+Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are fourteen implemented decisions:
 
 - **ADR 1**: one board per repository; the global project index only discovers and summarizes, and never introduces a cross-project lock.
 - **ADR 2**: no messages, inbox, or question queue; focus is a session property; the panel is read-only.
@@ -193,6 +195,13 @@ Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) 
 - **ADR 5**: one read-only screen and three concepts; no tabs, cards, feeds, setup screen, or composer.
 - **ADR 6**: every change records conversation identity, intent, paths, and release state.
 - **ADR 7**: short-lived auto leases for writes; explicit leases for planned work, released on idle or after TTL.
+- **ADR 8**: UI language comes from the host locale service, never from the served document language.
+- **ADR 9**: coordination is off by default behind one panel-header switch; off writes no board state.
+- **ADR 10**: the panel is a full-bleed app shell (logo rail + topbar + independently scrolling content), not a padded document page.
+- **ADR 11**: the rail lists active projects only; with none active the page is one quiet blank state, not a row of empty boxes.
+- **ADR 12**: the brand mark is a repo-drawn radiant eye (lens ring, pupil, eight rays) instead of a library eye icon.
+- **ADR 13**: the topbar carries only the coordination switch — no live indicator, no switch label.
+- **ADR 14**: no event list under the Gantt — exact times live in the bar tooltip, the full record in the CLI.
 
 Run **adrkit list** at task start and read the relevant implemented records. Use **adrkit relevant <path>** when a task targets specific files. Add or change decisions with **adrkit record** or **adrkit propose**, and run **adrkit validate --all** before finishing.
 

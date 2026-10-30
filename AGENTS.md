@@ -24,8 +24,9 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 - The global project index only aggregates status. It must not merge claims, timelines, or leases across repositories.
 - There are exactly three tools: team_status, team_roster, team_claim. Adding a tool is a product decision, not a small refactor.
 - The browser panel is a two-pane master-detail layout: full-height project rail on the left, selected project detail on the right. Do not move the project list back to large cards above the Gantt.
+- The rail lists active boards only (status active or claimed). Idle boards are hidden; with none active the page is one quiet blank state, never empty section boxes. See [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md).
 - The project rail footer shows the selected project's active-session and files-in-use counts. The rail must reach the bottom of the panel; do not let it float or stop after the last project row.
-- The Gantt is the primary timeline view. Keep an exact-time detail list available under the details element.
+- The Gantt is the only timeline surface in the panel. Exact times come from the bar tooltip; the full event record lives in the CLI. Do not add an event list under the Gantt. See [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md).
 
 ## Architecture
 
@@ -35,7 +36,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | lib/store.js                | Shared file format and all local persistence. Source of truth for presence, claims, changes, timeline, project summaries, global registry. |
 | lib/index.js                | DSH host plugin. Lifecycle, tools, write guard, prompt context, HTTP routes, project discovery.                                            |
-| lib/client.js               | Browser bundle loaded through window.**ModuleLoader**. Read-only project rail, sessions, Gantt, details.                                   |
+| lib/client.js               | Browser bundle loaded through window.**ModuleLoader**. Read-only project rail, sessions, Gantt.                                            |
 | bin/dsh-god-view.mjs        | Dependency-free CLI over the same store.                                                                                                   |
 | test/store.test.mjs         | Store, timeline, registry, concurrency, CLI tests.                                                                                         |
 | test/host-smoke.mjs         | Host lifecycle, dormant/enabled coordination, tools, write guard, HTTP routes.                                                             |
@@ -92,6 +93,7 @@ The registry is only a recent-project index. Each board remains the source of tr
 - UI language comes from the injected `locale` service (`ctx.locale.getSnapshot()` / `ctx.locale.subscribe`), never from a module-time read of `<html lang>`; see [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md). The sidebar label is registration metadata, so it is re-registered when the language changes.
 - Client code must use only browser APIs and the module loader; no Node imports.
 - There is no bundler step in this repository. A page refresh loads the latest client.js.
+- The panel is a full-bleed app shell: a 232px logo rail (brand area, project nav, footer counts), a 56px topbar (project name/path, and the switch as its only right-hand element), and one scrolling content area. The content area, not the topbar's column, is the scroll container.
 
 ## Architecture decisions
 
@@ -116,6 +118,11 @@ Current implemented decisions cover:
 - [ADR 7](adr/implemented/7-use-short-lived-auto-leases-plus-explicit-planned-leases.md): auto leases for writes, explicit leases for planned work, idle release and TTL.
 - [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md): UI language comes from the injected locale service, not the served document.
 - [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): coordination is off by default behind one panel switch.
+- [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell — logo rail, 56px topbar, scrolling content.
+- [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md): the rail lists active projects only; an empty board is one quiet blank page.
+- [ADR 12](adr/implemented/12-use-a-repo-owned-radiant-eye-mark-instead-of-a-library-icon.md): the brand mark is a repo-owned radiant eye, not a library icon.
+- [ADR 13](adr/implemented/13-let-the-topbar-carry-only-the-coordination-switch.md): the topbar carries only the switch — no live indicator, no label.
+- [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md): the Gantt is the only timeline surface; no event list under it.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -194,6 +201,7 @@ Reloading:
 - Focus and claims are separate. A file is not leased just because it appears in focus or files.
 - The project rail is full-height and fixed; the detail pane is the scroll container. The project list scrolls independently; the footer stays at the bottom of the rail, never below the viewport.
 - The rail must show status at a glance: dot, name, active/claims/active-change counts, last activity.
+- The rail lists only boards with a live presence or a live lease. When the selected board goes idle, selection moves to the first active board; with none, the blank page renders and the content has zero sections. Do not add a filter control, a second list, or a placeholder box to bring idle boards back.
 - The panel has exactly one control: the coordination switch. The UI test asserts one switch and zero inputs/selects/textareas.
 - Turning coordination off must release this host's auto leases; explicit leases are left to their owner. Never enable coordination automatically, including when a second session appears.
 - A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
@@ -224,6 +232,7 @@ Reloading:
 - Action buttons are 30px high, use icon + label by default, and have a visible :focus-visible ring. Icon-only actions need an aria-label and title.
 - The coordination switch is a slider: a button with role=switch and aria-checked, a 34x20 track and a 16px thumb. Never a checkbox input; the read-only test counts input/select/textarea and requires zero.
 - Section and rail headers use the shared Icon component; status dots use one vocabulary; active dots may pulse only with a prefers-reduced-motion off switch.
+- The brand mark is the repo's own radiant eye (24x24, ring r=4.4, pupil r=1.4, eight rays r=8.2-10.6, 1.7 stroke). It is not a lucide icon; do not swap it for a library glyph without a decision record, and re-check 18-19px legibility if you change the ray count.
 - Keep the project rail and session rows stable in height; text length must not change the layout of neighboring rows.
 
 ## Definition of done
@@ -233,7 +242,7 @@ Before reporting completion:
 1. node --check passes for every changed .js/.mjs file.
 2. node --test test/store.test.mjs passes.
 3. node test/host-smoke.mjs passes.
-4. node test/ui-flow.cjs reports CONTROLS 0, SWITCHES 1, HAS_PROJECTS true, HAS_TIMELINE true, and no console errors. When it prints SWITCH_STATE unavailable, the running host predates the coordination route: restart the host and rerun before calling the UI verified.
+4. node test/ui-flow.cjs reports CONTROLS 0, SWITCHES 1, HAS_PROJECTS true, and no console errors. When it also prints ACTIVE_ROWS true, HAS_TIMELINE must be true; with no active project the blank page renders instead. When it prints SWITCH_STATE unavailable, the running host predates the coordination route: restart the host and rerun before calling the UI verified.
 5. node bin/dsh-god-view.mjs claims reports no active claims, or every remaining claim is intentional and explained.
 6. Screenshots are refreshed when UI changed.
 7. README.md, README.en.md, and docs/protocol.md reflect the final behavior.
