@@ -61,7 +61,7 @@ There is no message queue, no inbox, and no "needs reply" state. Focus is a prop
 Each DSH session has a presence row in its repository:
 
 - focus: one line about current work;
-- status: active / idle / blocked / done;
+- status: active / idle / blocked / done (the panel/CLI show done as "ended");
 - heartbeat: proof that the session is alive;
 - sessionTitle: the human-readable conversation title.
 
@@ -86,7 +86,7 @@ Every claim belongs to a change:
 - which session (sessionId + sessionTitle);
 - what is being changed (intent);
 - which files (paths);
-- current state (claimed / done / expired);
+- current state (claimed / done / expired; done is shown as "released" and means the leases were released, not that the work was committed);
 - the absolute time and actor of every claim / release / expiry.
 
 The UI renders these events as a per-file Gantt chart. A bar runs from claim to release; an active lease extends to now and is striped.

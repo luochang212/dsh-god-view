@@ -211,6 +211,8 @@ test('CLI claim conflict and release timeline', () => {
   const recent = spawnSync(process.execPath, [cli, 'changes', '--repo', root], { encoding: 'utf8' });
   assert.match(recent.stdout, /Recent changes/);
   assert.match(recent.stdout, /fixed/);
+  assert.match(recent.stdout, /\[released\]/, 'a released change is not displayed as done');
+  assert.doesNotMatch(recent.stdout, /\[done\]/);
 });
 
 test('CLI status done and leave release owned claims', () => {

@@ -100,6 +100,16 @@ function ago(ms) {
   return Math.floor(hours / 24) + 'd';
 }
 
+// The wire keeps the state name "done"; the display must not imply a commit.
+// A closed session is "ended"; a change whose leases are gone is "released".
+function displayAgentStatus(status) {
+  return status === 'done' ? 'ended' : status;
+}
+
+function displayChangeState(state) {
+  return state === 'done' ? 'released' : state;
+}
+
 function printAgents(agents) {
   if (agents.length === 0) {
     console.log('No active agents.');
@@ -109,7 +119,9 @@ function printAgents(agents) {
     const stale = agent.stale ? ' (stale)' : '';
     const dot =
       agent.status === 'active' ? '●' : agent.status === 'blocked' ? '▲' : agent.status === 'done' ? '✓' : '○';
-    console.log(dot + ' ' + agent.name + '  ' + agent.status + '  ' + (agent.focus || '(no focus)') + stale);
+    console.log(
+      dot + ' ' + agent.name + '  ' + displayAgentStatus(agent.status) + '  ' + (agent.focus || '(no focus)') + stale,
+    );
     console.log('  id=' + agent.id + '  seen=' + ago(agent.heartbeatAt) + ' ago');
   }
 }
@@ -188,7 +200,7 @@ async function main() {
           .map((claim) => claim.path);
         if (owned.length > 0) releasePaths(root, id, owned, { summary: 'status done' });
       }
-      console.log(agent.name + ' is ' + agent.status + (agent.focus ? ': ' + agent.focus : ''));
+      console.log(agent.name + ' is ' + displayAgentStatus(agent.status) + (agent.focus ? ': ' + agent.focus : ''));
       if (opts.json) console.log(JSON.stringify(agent, null, 2));
       break;
     }
@@ -248,7 +260,7 @@ async function main() {
             'change ' +
               result.change.id +
               ' [' +
-              result.change.state +
+              displayChangeState(result.change.state) +
               '] ' +
               result.change.intent +
               ' - ' +
@@ -305,7 +317,7 @@ async function main() {
         for (const change of active)
           console.log(
             '  [' +
-              change.state +
+              displayChangeState(change.state) +
               '] ' +
               change.agentName +
               '  session=' +
@@ -321,7 +333,7 @@ async function main() {
         for (const change of recent)
           console.log(
             '  [' +
-              change.state +
+              displayChangeState(change.state) +
               '] ' +
               change.agentName +
               '  ' +

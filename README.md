@@ -61,7 +61,7 @@
 每个 DSH 会话在所在仓库里有一条 presence：
 
 - focus：当前工作的一句话；
-- status：active / idle / blocked / done；
+- status：active / idle / blocked / done（面板/CLI 把 done 显示为「已结束」）；
 - heartbeat：证明它还活着；
 - sessionTitle：人类可读的对话标题。
 
@@ -86,7 +86,7 @@ claim 是精确到文件路径的，不支持目录或 glob。
 - 哪个会话（sessionId + sessionTitle）；
 - 要改什么（intent）；
 - 改了哪些文件（paths）；
-- 当前状态（claimed / done / expired）；
+- 当前状态（claimed / done / expired；done 显示为「已释放」，只表示租约释放，不表示已提交）；
 - 每次 claim / release / expire 的绝对时间和执行者。
 
 前端把这些事件画成按文件分行的甘特图。条形从 claim 到 release；还活着的 lease 会延伸到当前时间，并用斜纹标出。
