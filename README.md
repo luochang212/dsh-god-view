@@ -24,12 +24,6 @@
 - 哪个文件正被谁占用（file lease）；
 - 什么时候占用、什么时候释放、被谁占用（claim/release timeline）。
 
-<p align="center">
-  <img src="screenshots/01-panel.png" alt="上帝视角：项目侧边栏与占用甘特图" width="100%" />
-</p>
-
-_界面示意（演示数据）。_
-
 ## 🔌 默认关闭，需要时才打开
 
 协作只有在你同时跑两个以上 Agent 时才有意义，所以它**默认是关的**。

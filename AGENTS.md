@@ -138,7 +138,7 @@ for f in lib/store.js lib/index.js lib/client.js bin/dsh-god-view.mjs test/store
 
 The UI tests assume the desktop DSH GUI is already running at the configured URL, Playwright is available through the machine-level node_modules, and the desktop auth cookie is available. The helper scripts handle that environment; do not hardcode secrets into documentation or source.
 
-UI tests write to screenshots/local/, which is ignored. Never commit those captures: they contain live session data. The README image at screenshots/01-panel.png is a sanitized demo illustration and must be updated deliberately, never by a test run.
+UI tests write to screenshots/local/, which is ignored. Never commit those captures: they contain live session data. The READMEs carry no panel screenshot while the UI is still changing fast.
 
 Enable the local pre-commit hook once per clone:
 

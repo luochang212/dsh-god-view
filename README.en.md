@@ -24,12 +24,6 @@ It is not a chat tool and not a human control panel. It is a read-only coordinat
 - which file is currently held, and by whom (a file lease);
 - when it was claimed, when it was released, and by whom (a claim/release timeline).
 
-<p align="center">
-  <img src="screenshots/01-panel.png" alt="God's Eye View: project rail and claim Gantt" width="100%" />
-</p>
-
-_UI illustration with demo data._
-
 ## 🔌 Off by default, on when you need it
 
 Coordination only pays off when two or more agents work at once, so it is **off by default**.
