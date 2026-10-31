@@ -125,7 +125,7 @@ Coordination is on by default. The switch is a single global file in the registr
 ```
 
 - **On (default, or file missing/unreadable):** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
-- **Off (`enabled: false`):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
+- **Off (`enabled: false`):** the host writes no board state. It creates no `.dsh/parallel`, no presence, no leases, no changes, and no prompt context. The write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
 - Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire. Turning it back on backfills presence for tracked sessions.
 - The switch never flips itself. A host that sees several sessions while off keeps that count internally and does not warn in the panel (ADR 18).
 
@@ -169,7 +169,7 @@ GET /projects reads the union of the host's known roots and this index, then com
 }
 ```
 
-`active` is the number of live non-stale sessions that are not done, including idle ones; it is a session count, not a "working now" count. `working` counts sessions with status `active`, and `blocked` counts status `blocked`. `lastActivityAt` is the newest `updatedAt`, claim timestamp, or change timestamp — never a heartbeat. A project's `status` is `active` when a session is working or blocked, or when `lastActivityAt` is within 30 minutes (`ACTIVE_WINDOW_MS`); it is `claimed` when only live leases remain; otherwise `idle`. Projects are sorted by last activity. Selecting a project only changes which board is read.
+`active` is the number of live non-stale sessions that are not done, including idle ones; it is a session count, not a "working now" count. `working` counts sessions with status `active`, and `blocked` counts status `blocked`. `lastActivityAt` is the newest `updatedAt`, claim timestamp, or change timestamp. It is never a heartbeat. A project's `status` is `active` when a session is working or blocked, or when `lastActivityAt` is within 30 minutes (`ACTIVE_WINDOW_MS`); it is `claimed` when only live leases remain; otherwise `idle`. Projects are sorted by last activity. Selecting a project only changes which board is read.
 
 ## HTTP surface
 

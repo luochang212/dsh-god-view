@@ -23,7 +23,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 - Boards are per repository. A claim in repo A must never block repo B.
 - The global project index only aggregates status. It must not merge claims, timelines, or leases across repositories.
 - There are exactly three tools: team_status, team_roster, team_claim. Adding a tool is a product decision, not a small refactor.
-- The browser panel is a two-pane master-detail layout: project detail on the left, full-height project rail on the right, collapsible to zero from the topbar. The rail carries no brand block — the panel's name lives on the host sidebar entry. Do not move the project list back to large cards above the Gantt, and do not move the rail back to the left edge (the host's own sidebar is there).
+- The browser panel is a two-pane master-detail layout: project detail on the left, full-height project rail on the right, collapsible to zero from the topbar. The rail carries no brand block. The panel's name lives on the host sidebar entry. Do not move the project list back to large cards above the Gantt, and do not move the rail back to the left edge (the host's own sidebar is there).
 - The rail lists active boards only: a working or blocked session, a live lease, or real activity within the last 30 minutes. A session whose only sign of life is the heartbeat is not active. Idle boards are hidden; with none active the page is one quiet blank state, never empty section boxes. See [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md) and [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md).
 - The rail is a list and nothing else: no caption, no count, no footer. Per-project numbers live on the rows; there is no panel-level total. The rail must reach the bottom of the panel; do not let it float or stop after the last project row.
 - The Gantt is the only timeline surface in the panel. Exact times come from the bar tooltip; the full event record lives in the CLI. Do not add an event list under the Gantt. See [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md).
@@ -64,7 +64,7 @@ Global index and switch:
 
 ```text
 ~/.dsh/parallel/projects.json
-~/.dsh/parallel/state.json      # { "enabled": true|false } — the coordination switch
+~/.dsh/parallel/state.json      # the coordination switch is { "enabled": true|false }
 ```
 
 The registry is only a recent-project index. Each board remains the source of truth.
@@ -119,10 +119,10 @@ Current implemented decisions cover:
 - [ADR 7](adr/implemented/7-use-short-lived-auto-leases-plus-explicit-planned-leases.md): auto leases for writes, explicit leases for planned work, idle release and TTL.
 - [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md): UI language comes from the injected locale service, not the served document.
 - [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): one panel switch owns the mode; its off-by-default choice is superseded by ADR 20.
-- [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell — 56px topbar, independently scrolling content, and a rail (now on the right with no brand block, per ADR 17 and ADR 19).
+- [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell with a 56px topbar, independently scrolling content, and a rail (now on the right with no brand block, per ADR 17 and ADR 19).
 - [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md): the rail lists active projects only; an empty board is one quiet blank page.
 - [ADR 12](adr/implemented/12-use-a-repo-owned-radiant-eye-mark-instead-of-a-library-icon.md): the brand mark is a repo-owned radiant eye, not a library icon.
-- [ADR 13](adr/implemented/13-let-the-topbar-carry-only-the-coordination-switch.md): the topbar carries only the switch — no live indicator, no label.
+- [ADR 13](adr/implemented/13-let-the-topbar-carry-only-the-coordination-switch.md): the topbar carries only the switch. There is no live indicator and no label.
 - [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md): the Gantt is the only timeline surface; no event list under it.
 - [ADR 15](adr/implemented/15-compose-the-content-area-as-two-section-cards-on-a-tinted-page.md): the content area is section cards with in-card headers and hairline rows, not outlined boxes; ADR 17 replaced the page tint with the host bg-base.
 - [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md): active means recent work (30 minutes), working/blocked, or a live lease; the heartbeat only filters dead hosts.
