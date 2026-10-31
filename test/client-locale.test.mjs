@@ -439,7 +439,8 @@ test('an empty board renders one blank state, not empty section boxes', () => {
   assert.equal(findByClass(tree, 'pt-card'), null, 'no cards on a blank board');
   const text = textOf(tree);
   assert.ok(text.includes('没有活跃项目'), 'topbar names the blank state');
-  assert.ok(text.includes('最近没有活动'), 'blank state explains why nothing is listed');
+  assert.ok(text.includes('最近还没有活动'), 'blank state explains why nothing is listed');
+  assert.ok(text.includes('项目会出现在右侧'), 'blank copy points at the rail on the right');
 });
 test('the brand mark is the radiant eye, in the rail and on the blank page', () => {
   const project = {
