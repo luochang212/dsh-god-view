@@ -84,7 +84,7 @@ Every claim belongs to a change:
 - which session (sessionId + sessionTitle);
 - what is being changed (intent);
 - which files (paths);
-- current state (claimed / done / expired; done is shown as "released" and means the leases were released, not that the work was committed);
+- current state (claimed / done / expired; the CLI shows done as "released", meaning the leases were released, not that the work was committed);
 - the absolute time and actor of every claim / release / expiry.
 
 The UI renders these events as a per-file Gantt chart. A bar runs from claim to release; an active lease extends to now and is striped.
@@ -101,7 +101,7 @@ One read-only screen rendered as a full-bleed app shell (no page padding):
 
 UI rules: type and spacing use one shared scale; any name, path, or focus that can overflow is single-line ellipsized with the full value in a title/tooltip; action buttons are 30px high and prefer icon + label; status dots, groups, and section headers share one vocabulary.
 
-Below 700px of panel width the shell stacks: the sidebar becomes a horizontal, scrollable project strip above the content.
+Below 700px of panel width the shell stacks: the rail becomes a horizontal, scrollable project strip above the content.
 
 ## 🚀 Quick start
 
@@ -135,9 +135,9 @@ Leave root empty. Each agent resolves its repository from its session cwd. Setti
 
 ### 3. Restart and open
 
-Restart the DSH host, refresh the page, and open **Agents** in the left sidebar.
+Restart the DSH host, refresh the page, and open **God's Eye** (上帝视角) in the host sidebar.
 
-Every project tracked by the plugin on this DSH appears in the project rail. A project never opened with the plugin is not discovered automatically.
+Every project tracked by the plugin on this DSH enters the global project index; only the active ones appear in the project rail. A project never opened with the plugin is not discovered automatically.
 
 ## 🧰 Tools and CLI
 
@@ -184,27 +184,13 @@ It stores root / name / lastSeenAt only. Presence, claims, and timelines always 
 
 ## 🧭 Decisions
 
-Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). There are nineteen implemented decisions:
+Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). Records keep accruing, so this section keeps only the choices that shape the product; run `adrkit list` for the full set and each record's reasoning.
 
-- **ADR 1**: one board per repository; the global project index only discovers and summarizes, and never introduces a cross-project lock.
-- **ADR 2**: no messages, inbox, or question queue; focus is a session property; the panel is read-only.
-- **ADR 3**: record occupancy as a claim/release timeline and render it as a per-file Gantt.
-- **ADR 4**: the project list is navigation, not content; use a full-height project rail instead of cards above the Gantt.
-- **ADR 5**: one read-only screen and three concepts; no tabs, cards, feeds, setup screen, or composer.
-- **ADR 6**: every change records conversation identity, intent, paths, and release state.
-- **ADR 7**: short-lived auto leases for writes; explicit leases for planned work, released on idle or after TTL.
-- **ADR 8**: UI language comes from the host locale service, never from the served document language.
-- **ADR 9**: coordination is off by default behind one panel-header switch; off writes no board state.
-- **ADR 10**: the panel is a full-bleed app shell (logo rail + topbar + independently scrolling content), not a padded document page.
-- **ADR 11**: the rail lists active projects only; with none active the page is one quiet blank state, not a row of empty boxes.
-- **ADR 12**: the brand mark is a repo-drawn radiant eye (lens ring, pupil, eight rays) instead of a library eye icon.
-- **ADR 13**: the topbar carries only the coordination switch — no live indicator, no switch label.
-- **ADR 14**: no event list under the Gantt — exact times live in the bar tooltip, the full record in the CLI.
-- **ADR 15**: the content area is two section cards (host elevation token, in-card headers, hairline rows); the brand tile grows to 36px. ADR 17 later removed the page tint in favour of the host bg-base.
-- **ADR 16**: active means real activity in the last 30 minutes, a working/blocked session, or a live lease; the heartbeat only filters dead hosts and is never shown as activity.
-- **ADR 17**: the rail sits on the right, collapses to zero, and the chrome uses host tokens and the host switch spec.
-- **ADR 18**: no coordination-off banner under the topbar; the switch alone carries the state.
-- **ADR 19**: the rail is one bare list with no header, count or footer; the rail toggle is pinned to the panel's top-right corner so it never moves.
+- one board per repository; the global index only discovers and summarizes, never merges claims, and adds no cross-project lock (ADR 1).
+- no messages, inbox, or reply state; focus is a session property, and the panel is read-only apart from the coordination switch (ADR 2, 5).
+- occupancy is a claim/release timeline rendered as a per-file Gantt; the Gantt is the only timeline surface (ADR 3, 14).
+- coordination is on by default and a human turns it off from the topbar; off writes no board state (ADR 9, 20).
+- the rail lists active projects only — real activity within 30 minutes, a working/blocked session, or a live lease — and with none active the page is one quiet blank state (ADR 11, 16, 19).
 
 Run **adrkit list** at task start and read the relevant implemented records. Use **adrkit relevant <path>** when a task targets specific files. Add or change decisions with **adrkit record** or **adrkit propose**, and run **adrkit validate --all** before finishing.
 
@@ -239,13 +225,7 @@ node test/host-smoke.mjs          # tools / write guard / /projects / /claim / /
 node test/ui-flow.cjs             # read-only UI + screenshots
 ```
 
-The UI test requires the desktop DSH host, Playwright, and the local desktop auth cookie. It asserts:
-
-- CONTROLS 0
-- HAS_PROJECTS true
-- HAS_TIMELINE true
-- HAS_SESSION true
-- no console errors
+The UI test requires the desktop DSH host, Playwright, and the local desktop auth cookie. It asserts zero inputs, exactly one coordination switch, at least one active project row, a Gantt for the selected project, and no console errors; fields such as HAS_SESSION are printed probes, not assertions.
 
 Refresh the page after client changes; restart the host after host changes. Development rules are in [AGENTS.md](AGENTS.md); the file format is in [docs/protocol.md](docs/protocol.md).
 

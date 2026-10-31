@@ -33,7 +33,6 @@
 - 中途打开或关闭都可以：打开之前已在改的文件不会被补登记，保护从下一次写入开始。
 - 关闭会释放本机持有的自动占用，历史记录保留但不再更新。
 - 开关不会自己翻转，只有人能改。
-- 它不会自己打开。即使插件看到多个会话在跑，也只会在面板上提示你。
 
 ## ✨ 它解决什么问题
 
@@ -85,7 +84,7 @@ claim 是精确到文件路径的，不支持目录或 glob。
 - 哪个会话（sessionId + sessionTitle）；
 - 要改什么（intent）；
 - 改了哪些文件（paths）；
-- 当前状态（claimed / done / expired；done 显示为「已释放」，只表示租约释放，不表示已提交）；
+- 当前状态（claimed / done / expired；CLI 把 done 显示为 released，只表示租约释放，不表示已提交）；
 - 每次 claim / release / expire 的绝对时间和执行者。
 
 前端把这些事件画成按文件分行的甘特图。条形从 claim 到 release；还活着的 lease 会延伸到当前时间，并用斜纹标出。
@@ -102,7 +101,7 @@ claim 是精确到文件路径的，不支持目录或 glob。
 
 界面规则：字号和间距使用统一刻度；名称、路径、focus 等可能超长的内容单行省略，完整值放在 title / tooltip；操作按钮 30px 高，优先图标 + 文字；状态灯、分组和 section 标题全站共用同一套样式。
 
-面板宽度 ≤700px 时，外壳改为纵向堆叠：左侧栏变成内容上方的横向可滚动项目条。
+面板宽度 ≤700px 时，外壳改为纵向堆叠：项目栏变成内容上方的横向可滚动项目条。
 
 ## 🚀 快速开始
 
@@ -138,7 +137,7 @@ root 留空即可。每个 Agent 会按自己的 session cwd 找到对应仓库�
 
 重启 DSH host，刷新页面，点击左侧边栏的 **上帝视角 / God's Eye**。
 
-同一台 DSH 上所有被插件跟踪过的项目会出现在左侧项目栏；没有用插件打开过的项目不会自动出现。
+被插件跟踪过的项目会进入全局项目索引，其中活跃的才出现在右侧项目栏；没有用插件打开过的项目不会自动出现。
 
 ## 🧰 工具与 CLI
 
@@ -185,27 +184,13 @@ node bin/dsh-god-view.mjs leave --id <id>
 
 ## 🧭 关键决策
 
-关键取舍用 [adr-kit](https://github.com/luochang212/adr-kit) 记录在 [adr/](adr/README.md)。当前有 19 条已实现决策：
+关键取舍用 [adr-kit](https://github.com/luochang212/adr-kit) 记录在 [adr/](adr/README.md)。记录会继续增加，所以这里只留决定产品形状的几条；完整清单和每条的理由用 `adrkit list` 查看。
 
-- **ADR 1**：每个仓库独立 board，全局项目索引只做发现和汇总，不做跨项目锁。
-- **ADR 2**：移除消息/收件箱/待回复；focus 是会话属性，面板只读。
-- **ADR 3**：用 claim/release timeline 记录占用历史，并渲染为按文件的甘特图。
-- **ADR 4**：项目列表是导航，不是内容；使用全高项目栏，而不是顶部卡片。
-- **ADR 5**：只保留一个只读界面和三个概念；不做 tabs、统计卡片、活动流、设置页或 composer。
-- **ADR 6**：每条 change 记录对话身份、intent、paths 和释放状态。
-- **ADR 7**：写入使用短生命周期 auto lease；计划工作使用 explicit lease，idle 释放或 TTL 过期。
-- **ADR 8**：界面语言取自宿主 locale 服务，不读文档的 lang 属性。
-- **ADR 9**：协作默认关闭，面板头部一个开关打开；关闭时不写任何 board 状态。
-- **ADR 10**：面板是整页应用外壳（品牌侧栏 + 顶栏 + 独立滚动内容），不是带内边距的文档页。
-- **ADR 11**：侧栏只列活跃项目；没有活跃项目时是一整页安静的空状态，而不是一排空盒子。
-- **ADR 12**：品牌图标改为自绘的放射之眼（眼环 + 瞳孔 + 八道光线），不再借用图标库的眼睛。
-- **ADR 13**：顶栏只留协作开关，去掉「实时」状态点和「协作」文字。
-- **ADR 14**：甘特图下面不再列事件明细，精确时间交给甘特条的 tooltip，完整记录留在 CLI。
-- **ADR 15**：内容区改为「两张分区卡片」，卡片用宿主 elevation token、表头在卡内、行间发丝线；品牌徽章升到 36px。页面底色后来在 ADR 17 中去掉，改用宿主 bg-base。
-- **ADR 16**：活跃按最近 30 分钟的真实活动、进行中/受阻会话或占用判断；心跳只用于过滤死宿主，不再当作活跃。
-- **ADR 17**：项目栏移到右侧、收起到 0，控件改用宿主 token 和宿主开关规格。
-- **ADR 18**：去掉协作关闭时顶栏下方那条提示横幅，状态只由开关本身表达。
-- **ADR 19**：侧栏只留一列活跃项目（无标题/计数/底部统计），折叠钮固定在整个面板右上角，收起后不再移动。
+- 每个仓库一块 board，全局索引只做发现和汇总，不合并 claim，也不加跨项目锁（ADR 1）。
+- 没有消息、收件箱或待回复；focus 是会话属性，面板除了协作开关只读（ADR 2、5）。
+- 占用是 claim/release 时间轴，按文件渲染成甘特图；甘特图是唯一的时间轴界面（ADR 3、14）。
+- 协作默认开启，由人从顶栏关掉；关闭时不写任何 board 状态（ADR 9、20）。
+- 侧栏只列活跃项目：最近 30 分钟有真实活动、有进行中/受阻会话，或有文件占用；一个都没有时是一整页安静的空状态（ADR 11、16、19）。
 
 开始任务前运行 **adrkit list**，读取相关的 implemented 记录；改动特定文件时运行 **adrkit relevant <path>**。新增/变更决策用 **adrkit record** 或 **adrkit propose**，完成前运行 **adrkit validate --all**。
 
@@ -240,13 +225,7 @@ node test/host-smoke.mjs          # tools / write guard / /projects / /claim / /
 node test/ui-flow.cjs             # read-only UI + screenshots
 ```
 
-UI 测试需要先启动桌面 DSH、Playwright，以及本机登录 cookie。测试会断言：
-
-- CONTROLS 0
-- HAS_PROJECTS true
-- HAS_TIMELINE true
-- HAS_SESSION true
-- 无 console error
+UI 测试需要先启动桌面 DSH、Playwright，以及本机登录 cookie。测试断言：没有输入控件、恰好一个协作开关、右侧项目栏至少一行、选中的项目有甘特图、没有 console error；HAS_SESSION 之类的字段只是打印出来的探针。
 
 改动 UI 后刷新页面即可；改动 host 后需要重启 host。开发约定见 [AGENTS.md](AGENTS.md)，文件格式见 [docs/protocol.md](docs/protocol.md)。
 

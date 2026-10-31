@@ -119,12 +119,12 @@ Current implemented decisions cover:
 - [ADR 7](adr/implemented/7-use-short-lived-auto-leases-plus-explicit-planned-leases.md): auto leases for writes, explicit leases for planned work, idle release and TTL.
 - [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md): UI language comes from the injected locale service, not the served document.
 - [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): one panel switch owns the mode; its off-by-default choice is superseded by ADR 20.
-- [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell — logo rail, 56px topbar, scrolling content.
+- [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell — 56px topbar, independently scrolling content, and a rail (now on the right with no brand block, per ADR 17 and ADR 19).
 - [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md): the rail lists active projects only; an empty board is one quiet blank page.
 - [ADR 12](adr/implemented/12-use-a-repo-owned-radiant-eye-mark-instead-of-a-library-icon.md): the brand mark is a repo-owned radiant eye, not a library icon.
 - [ADR 13](adr/implemented/13-let-the-topbar-carry-only-the-coordination-switch.md): the topbar carries only the switch — no live indicator, no label.
 - [ADR 14](adr/implemented/14-show-the-gantt-only-and-move-exact-times-into-the-bar-tooltip.md): the Gantt is the only timeline surface; no event list under it.
-- [ADR 15](adr/implemented/15-compose-the-content-area-as-two-section-cards-on-a-tinted-page.md): the content area is section cards on a tinted page, not outlined boxes.
+- [ADR 15](adr/implemented/15-compose-the-content-area-as-two-section-cards-on-a-tinted-page.md): the content area is section cards with in-card headers and hairline rows, not outlined boxes; ADR 17 replaced the page tint with the host bg-base.
 - [ADR 16](adr/implemented/16-define-active-as-recent-work-with-a-30-minute-window.md): active means recent work (30 minutes), working/blocked, or a live lease; the heartbeat only filters dead hosts.
 - [ADR 17](adr/implemented/17-put-the-rail-on-the-right-collapse-it-to-zero-and-borrow-host-chrome.md): the rail sits on the right, collapses to zero, and the chrome uses host tokens and the host Switch.
 - [ADR 18](adr/implemented/18-drop-the-coordination-off-banner.md): no coordination-off banner; the switch alone carries the state.
@@ -136,7 +136,7 @@ When a choice is already shipped, use adrkit record with --raised-by and --decid
 ## Commands
 
 ```sh
-npm test                                  # store tests only (test/*.test.mjs)
+npm test                                  # store + client-locale tests (test/*.test.mjs)
 node --test test/store.test.mjs           # explicit store/timeline/concurrency/CLI tests
 node test/host-smoke.mjs                  # host tools, guard, /projects, /claim, /release
 node test/ui-flow.cjs                     # read-only UI + the one switch; needs the desktop host + Playwright

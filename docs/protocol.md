@@ -44,7 +44,7 @@ A board is always repository-local. The index only lists roots; it never merges 
 }
 ```
 
-Focus is a current property, not a message. It has no reply state. Heartbeats renew it while the agent is tracked; stale presence is hidden by default. `heartbeatAt` + `ttlMs` prove only that the host process is alive; `updatedAt` is the last real activity (a user/subagent prompt, a turn change, a tool result, or team_status). The heartbeat is never treated as activity. `done` is the wire state for a closed session; the panel/CLI display it as `ended`.
+Focus is a current property, not a message. It has no reply state. Heartbeats renew it while the agent is tracked; stale presence is flagged, hidden from the panel's session list, and omitted from team_roster unless `include_stale` is true. `heartbeatAt` + `ttlMs` prove only that the host process is alive; `updatedAt` is the last real activity (a user/subagent prompt, a turn change, a tool result, or team_status). The heartbeat is never treated as activity. `done` is the wire state for a closed session; the panel/CLI display it as `ended`.
 
 ## Claims and changes
 
@@ -109,7 +109,7 @@ Change file:
 Lifecycle:
 
 - claim creates or extends the agent's active change and appends a claim event per path;
-- release removes the lease and appends a release event; when no leases remain, the change becomes done with the release summary. `done` is displayed as `released` in the panel/CLI and only means the leases were released, not that the work was committed;
+- release removes the lease and appends a release event; when no leases remain, the change becomes done with the release summary. The CLI displays `done` as `released`; the panel shows the timeline and summary, not a state label. It only means the leases were released, not that the work was committed;
 - auto release on idle uses summary turn ended;
 - expired leases are removed and append an expire event; when no leases remain, the change becomes expired;
 - one active change per agent; a new claim joins it unless it was released.
