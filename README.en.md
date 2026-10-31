@@ -225,9 +225,9 @@ Writes and edits are auto-claimed; a live claim by another agent denies the writ
 There is no build step. The browser bundle is loaded directly by the DSH module loader.
 
 ```sh
-node --test test/store.test.mjs   # store / timeline / registry / concurrency / CLI
-node test/host-smoke.mjs          # tools / write guard / /projects / /claim / /release
-node test/ui-flow.cjs             # read-only UI + screenshots
+npm test                          # store + client-locale suites
+node test/host-smoke.mjs          # tools / write guard / /projects / /state / /coordination
+node test/ui-flow.cjs             # read-only UI + the coordination switch
 ```
 
 The UI test requires the desktop DSH host, Playwright, and the local desktop auth cookie. It asserts zero inputs, exactly one coordination switch, at least one active project row, a Gantt for the selected project, and no console errors; fields such as HAS_SESSION are printed probes, not assertions.

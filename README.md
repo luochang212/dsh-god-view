@@ -225,9 +225,9 @@ write/edit 自动 claim，与他人的活跃 claim 冲突时拒绝写入；面�
 无需构建，浏览器端由 DSH 的 module loader 直接加载。
 
 ```sh
-node --test test/store.test.mjs   # store / timeline / registry / concurrency / CLI
-node test/host-smoke.mjs          # tools / write guard / /projects / /claim / /release
-node test/ui-flow.cjs             # read-only UI + screenshots
+npm test                          # store + client-locale suites
+node test/host-smoke.mjs          # tools / write guard / /projects / /state / /coordination
+node test/ui-flow.cjs             # read-only UI + the coordination switch
 ```
 
 UI 测试需要先启动桌面 DSH、Playwright，以及本机登录 cookie。测试断言：没有输入控件、恰好一个协作开关、右侧项目栏至少一行、选中的项目有甘特图、没有 console error；HAS_SESSION 之类的字段只是打印出来的探针。

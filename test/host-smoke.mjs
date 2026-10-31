@@ -256,5 +256,17 @@ assert.equal((await response.json()).enabled, true);
 const cross = await fetch(base + '/state', { headers: { origin: 'http://evil.example' } });
 assert.equal(cross.status, 403);
 
+// A done status releases every lease the agent holds, explicit ones included.
+// The idle path above only exercises the default all=false; this pins the
+// (entry, all, summary) argument order of releaseAutoClaims.
+const claimTool = tools.get('team_claim');
+await claimTool.execute({ action: 'claim', paths: ['src/done.ts'], reason: 'planned lease' }, { agent: bob });
+const explicitLease = S.getClaim(repo, 'src/done.ts');
+assert.ok(explicitLease && explicitLease.auto !== true, 'team_claim creates an explicit lease');
+await tools.get('team_status').execute({ status: 'done' }, { agent: bob });
+assert.equal(S.getClaim(repo, 'src/done.ts'), undefined, 'done releases explicit leases too');
+const doneChange = S.listChanges(repo, { state: 'done' }).find((change) => change.summary === 'status done');
+assert.ok(doneChange, 'the release records the status-done summary');
+
 await new Promise((resolve) => server.close(resolve));
 console.log('host smoke ok', repo, S.listAgents(repo).length, tools.size);

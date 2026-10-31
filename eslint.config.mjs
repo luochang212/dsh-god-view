@@ -32,7 +32,13 @@ export default [
   {
     files: ['**/*.{js,mjs,cjs}'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: common },
-    rules: { 'no-unused-vars': 'off', 'no-empty': 'off' },
+    rules: {
+      // Underscore-prefixed names mark a deliberate discard: the client and the
+      // UI helpers swallow storage/fetch errors on purpose. Anything without
+      // the prefix is a real leftover and fails the build.
+      'no-unused-vars': ['error', { args: 'after-used', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      'no-empty': 'off',
+    },
   },
   {
     files: ['lib/client.js'],
