@@ -16,7 +16,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 
 ## Non-negotiable product shape
 
-- Coordination is off by default. Dormant means the plugin writes nothing: no board directory, no presence, no leases, no history, no prompt context, and no write guard. One switch in the panel header turns it on; nothing turns it on automatically. See [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md).
+- Coordination is on by default and only a human changes it. With the switch off the plugin is dormant: no board directory, no presence, no leases, no history, no prompt context, and no write guard. One switch in the panel header turns it off and on. See [ADR 20](adr/implemented/20-turn-coordination-on-by-default.md); it supersedes ADR 9's default.
 - The panel is read-only apart from that one switch. There is no data input and no refresh button; the panel polls by itself. Project rows are navigation buttons. Do not add a composer, message box, reply box, question queue, or human input.
 - There are no messages. There is no team_send, inbox, needsReply, read state, reply_to, message TTL, or "Agent questions" section. Do not reintroduce them without an explicit request.
 - Focus is a property of the current session at the current time. It is not a message and has no lifecycle.
@@ -118,7 +118,7 @@ Current implemented decisions cover:
 - [ADR 6](adr/implemented/6-record-conversation-identity-intent-paths-and-release-state-on-every-change.md): change records carry conversation identity, intent, paths, and release state.
 - [ADR 7](adr/implemented/7-use-short-lived-auto-leases-plus-explicit-planned-leases.md): auto leases for writes, explicit leases for planned work, idle release and TTL.
 - [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md): UI language comes from the injected locale service, not the served document.
-- [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): coordination is off by default behind one panel switch.
+- [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): one panel switch owns the mode; its off-by-default choice is superseded by ADR 20.
 - [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell — logo rail, 56px topbar, scrolling content.
 - [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md): the rail lists active projects only; an empty board is one quiet blank page.
 - [ADR 12](adr/implemented/12-use-a-repo-owned-radiant-eye-mark-instead-of-a-library-icon.md): the brand mark is a repo-owned radiant eye, not a library icon.
@@ -129,6 +129,7 @@ Current implemented decisions cover:
 - [ADR 17](adr/implemented/17-put-the-rail-on-the-right-collapse-it-to-zero-and-borrow-host-chrome.md): the rail sits on the right, collapses to zero, and the chrome uses host tokens and the host Switch.
 - [ADR 18](adr/implemented/18-drop-the-coordination-off-banner.md): no coordination-off banner; the switch alone carries the state.
 - [ADR 19](adr/implemented/19-strip-the-rail-to-a-bare-list-and-pin-the-toggle-to-the-panel-corner.md): the rail is one bare list, and the rail toggle is pinned to the panel corner.
+- [ADR 20](adr/implemented/20-turn-coordination-on-by-default.md): coordination is on by default; a human turns it off.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -209,7 +210,7 @@ Reloading:
 - The rail must show status at a glance: dot, name, working/blocked/claims/change counts, last activity.
 - The rail lists only boards with a working/blocked session, a live lease, or activity within 30 minutes; a heartbeat alone is not a reason to list a board. When the selected board goes idle, selection moves to the first active board; with none, the blank page renders and the content has zero sections. Do not add a filter control, a second list, or a placeholder box to bring idle boards back.
 - The panel has exactly two controls, both chrome: the coordination switch (mode) and the rail toggle (layout). The UI test asserts one switch, one toggle, and zero inputs/selects/textareas. Never put a control inside the rail: collapsing it must not hide a decision.
-- Turning coordination off must release this host's auto leases; explicit leases are left to their owner. Never enable coordination automatically, including when a second session appears.
+- Turning coordination off must release this host's auto leases; explicit leases are left to their owner. The switch never flips itself: it starts on (ADR 20) and only a human turns it off.
 - A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
 - A page refresh is required after client changes; a host reload is required after lib/index.js changes.
 - Protocol changes are breaking. If a file shape or route changes incompatibly, bump PROTOCOL and update README, docs/protocol.md, tests, and the migration section.

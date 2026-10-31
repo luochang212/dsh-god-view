@@ -77,7 +77,12 @@ const bob = makeAgent('session-bob-654321');
 const aliceId = S.agentIdForSession('session-alice-123456');
 const bobId = S.agentIdForSession('session-bob-654321');
 
-// Default is off: the host keeps sessions in memory, writes nothing, blocks nothing.
+// Default is on. A human turns it off from the panel switch; the off path below
+// is exercised explicitly so it keeps its assertions.
+assert.equal(S.readCoordination(registry).enabled, true, 'coordination is on by default');
+S.writeCoordination(registry, false);
+
+// Switched off: the host keeps sessions in memory, writes nothing, blocks nothing.
 emit('agent/created', { agent: alice });
 assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writes no board');
 const pre = handlers.get('tools/pre-execute')[0];

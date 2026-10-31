@@ -1,7 +1,7 @@
 {
   "name": "dsh-god-view",
   "version": "0.3.0",
-  "description": "上帝视角 (God's Eye View) — per-repo presence, file leases, claim/release Gantt, and a global recent-project index for parallel agents, off by default behind one switch",
+  "description": "Keeps parallel coding agents from colliding: per repository file leases, claim and release records, and a Gantt for the human watching. A DSH plugin, on by default, one switch turns it off.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

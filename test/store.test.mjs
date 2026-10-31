@@ -258,16 +258,16 @@ test('CLI status done and leave release owned claims', () => {
     /agent left/,
   );
 });
-test('coordination is off by default and the switch persists in the registry dir', () => {
+test('coordination is on by default and the switch persists in the registry dir', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-switch-'));
+  assert.equal(S.readCoordination(dir).enabled, true, 'no state file reads as on');
+  const off = S.writeCoordination(dir, false, { now: 1000 });
+  assert.equal(off.enabled, false);
   assert.equal(S.readCoordination(dir).enabled, false);
-  const on = S.writeCoordination(dir, true, { now: 1000 });
-  assert.equal(on.enabled, true);
+  S.writeCoordination(dir, true, { now: 2000 });
   assert.equal(S.readCoordination(dir).enabled, true);
-  S.writeCoordination(dir, false, { now: 2000 });
-  assert.equal(S.readCoordination(dir).enabled, false);
   fs.writeFileSync(path.join(dir, 'state.json'), 'not json');
-  assert.equal(S.readCoordination(dir).enabled, false);
+  assert.equal(S.readCoordination(dir).enabled, true, 'unreadable state reads as on');
 });
 
 test('reading a board that does not exist creates nothing', () => {

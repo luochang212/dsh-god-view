@@ -24,17 +24,15 @@ It is not a chat tool and not a human control panel. It is a read-only coordinat
 - which file is currently held, and by whom (a file lease);
 - when it was claimed, when it was released, and by whom (a claim/release timeline).
 
-## 🔌 Off by default, on when you need it
+## 🔌 On by default, off whenever you want
 
-Coordination only pays off when two or more agents work at once, so it is **off by default**.
+Coordination exists so parallel agents do not step on each other, so it is **on by default**: writes register leases and a file held by someone else is rejected.
 
-While it is off the plugin does nothing: no board directory, no presence rows, no file leases, no write guard, and no prompt context. A single agent edits at full speed with no overhead.
+When you do not need it, turn the coordination switch off in the panel header. While it is off the plugin does nothing: no board directory, no presence rows, no file leases, no write guard, and no prompt context. A single agent edits at full speed with no overhead.
 
-When you are about to run a team, flip the **coordination switch** in the panel header — the panel's only control. From that moment writes register leases and a file held by someone else is rejected.
-
-- Turning it on mid-flight is fine: files already being edited are not back-claimed, and protection starts at the next write.
 - Turning it off releases the automatic leases this host holds and freezes the history instead of deleting it.
-- It never turns itself on.
+- Turning it back on does not back-claim files already being edited; protection starts at the next write.
+- The switch never flips itself.
 
 ## ✨ What it solves
 

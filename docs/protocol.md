@@ -118,15 +118,15 @@ Release accepts a summary. Expiry uses lease expired. The timeline is capped at 
 
 ## Coordination switch
 
-Coordination is off by default. The switch is a single global file in the registry directory:
+Coordination is on by default. The switch is a single global file in the registry directory:
 
 ```json
-{ "version": 1, "enabled": false, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
+{ "version": 1, "enabled": true, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
 ```
 
-- **Off (default, or file missing/unreadable):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
-- **On:** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
-- Turning it on backfills presence for tracked sessions. Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire.
+- **On (default, or file missing/unreadable):** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
+- **Off (`enabled: false`):** the host writes no board state — no `.dsh/parallel`, no presence, no leases, no changes, no prompt context — and the write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
+- Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire. Turning it back on backfills presence for tracked sessions.
 - The switch never flips itself. A host that sees several sessions while off keeps that count internally and does not warn in the panel (ADR 18).
 
 ## Write guard
