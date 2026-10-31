@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
   <a href="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://luochang212.github.io/dsh-god-view/"><img src="https://img.shields.io/badge/ADR-archive-8a4b2a?style=flat-square" alt="ADR archive" /></a>
 </p>
 
 **让同一仓库里的多个 Agent 看得见彼此，不抢同一个文件，并且留下可回看的占用时间轴。**
@@ -193,6 +194,20 @@ node bin/dsh-god-view.mjs leave --id <id>
 - 侧栏只列活跃项目：最近 30 分钟有真实活动、有进行中/受阻会话，或有文件占用；一个都没有时是一整页安静的空状态（ADR 11、16、19）。
 
 开始任务前运行 **adrkit list**，读取相关的 implemented 记录；改动特定文件时运行 **adrkit relevant <path>**。新增/变更决策用 **adrkit record** 或 **adrkit propose**，完成前运行 **adrkit validate --all**。
+
+## 📚 决策档案
+
+完整档案发布在 GitHub Pages：https://luochang212.github.io/dsh-god-view/
+
+它由 `adr/` 里的记录生成，提供 Folio 和 Signal 两种排版，各有中英文版本。每次推送后由 [site.yml](.github/workflows/site.yml) 重新构建，生成的 HTML 和索引不提交。
+
+本地预览：
+
+```sh
+cd site
+npm ci
+npm run dev
+```
 
 ## ⚙️ 配置
 

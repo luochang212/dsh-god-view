@@ -10,7 +10,7 @@ It has exactly three jobs:
 2. Lease files so two agents do not edit the same path at the same time.
 3. Show a claim/release timeline (who held which file, from when, until when).
 
-Version: 0.3.0. Protocol: 3. No build step. Runtime is plain ESM JavaScript on Node >= 20.
+Version: 0.3.0. Protocol: 3. The plugin has no build step; runtime is plain ESM JavaScript on Node >= 20. The separate `site/` project builds the ADR archive with Astro.
 
 Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before changing behavior.
 
@@ -47,6 +47,8 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 | examples/cordis.patch.yml   | Profile install example.                                                                                                                   |
 | docs/protocol.md            | Wire and file formats, HTTP surface, migration notes.                                                                                      |
 | adr/                        | Architecture decision records maintained with adr-kit. Read relevant implemented records before changing scoped behavior.                  |
+| site/                       | Private Astro project that publishes the ADR archive to GitHub Pages. Generated atlas pages and src/data/decisions.json are not committed. |
+| .github/workflows/site.yml  | Rebuilds the atlas and deploys site/dist to GitHub Pages on pushes that touch site/, adr/, or the manifests.                               |
 
 ### Data layout
 
@@ -93,7 +95,7 @@ The registry is only a recent-project index. Each board remains the source of tr
 - The header carries the coordination switch (role=switch, data-coordination=on|off|unavailable). It POSTs /coordination and re-reads state; when the running host predates the route the switch renders disabled instead of breaking the panel.
 - UI language comes from the injected `locale` service (`ctx.locale.getSnapshot()` / `ctx.locale.subscribe`), never from a module-time read of `<html lang>`; see [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md). The sidebar label is registration metadata, so it is re-registered when the language changes.
 - Client code must use only browser APIs and the module loader; no Node imports.
-- There is no bundler step in this repository. A page refresh loads the latest client.js.
+- The plugin has no bundler step. A page refresh loads the latest client.js. The separate site/ project has an Astro build for the published archive.
 - The panel is a full-bleed app shell: a 56px topbar (project name/path and the coordination switch), one scrolling content area, and a 264px rail on the right that is a bare list of active projects and collapses to zero. Rail fill is `--dsw-specific-sidebar-fill`. The rail toggle is pinned to the panel's top-right corner (14px inset) so it does not move when the rail collapses; the rail opens with a 56px top band (the topbar's height, leaving 20px between the button and the first row) and the topbar reserves 44px at its right edge so neither runs under the toggle. The content area, not the topbar's column, is the scroll container.
 
 ## Architecture decisions
@@ -130,6 +132,7 @@ Current implemented decisions cover:
 - [ADR 18](adr/implemented/18-drop-the-coordination-off-banner.md): no coordination-off banner; the switch alone carries the state.
 - [ADR 19](adr/implemented/19-strip-the-rail-to-a-bare-list-and-pin-the-toggle-to-the-panel-corner.md): the rail is one bare list, and the rail toggle is pinned to the panel corner.
 - [ADR 20](adr/implemented/20-turn-coordination-on-by-default.md): coordination is on by default; a human turns it off.
+- [ADR 21](adr/implemented/21-publish-the-decision-archive-as-a-separate-astro-site-on-github-pages.md): the ADR archive is a separate Astro site on GitHub Pages; generated atlas files are not committed.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -142,6 +145,8 @@ node test/host-smoke.mjs                  # host tools, guard, /projects, /claim
 node test/ui-flow.cjs                     # read-only UI + the one switch; needs the desktop host + Playwright
 node test/ui-lang.cjs                     # cold-start language regression; needs the desktop host + Playwright
 node test/ui-shot.cjs                     # write ignored screenshots/local/01-panel.png and 03-dark.png
+npm run site:build                        # generate the atlas and build site/dist; run npm ci in site first
+npm run site:dev                          # local preview at the Pages base path
 ```
 
 Syntax check before finishing:
@@ -160,7 +165,7 @@ Enable the local pre-commit hook once per clone:
 git config core.hooksPath .githooks
 ```
 
-The hook runs format:check, lint, store tests, host smoke, and adr validate. CI runs the same checks plus npm ci on Node 24.
+The hook runs format:check, lint, store tests, host smoke, and adr validate. CI runs the same checks plus npm ci on Node 24. The separate site workflow builds and deploys the archive on pushes that touch site/ or adr/.
 
 ## Local install and reload
 
@@ -225,7 +230,7 @@ Reloading:
 - Keep the host/client split. The browser must not import lib/store.js or any Node module.
 - Use atomic JSON writes (writeJsonAtomic) for board files and the registry.
 - Prefer small, explicit functions over generic frameworks. This plugin intentionally has three concepts.
-- Do not add a build system, a database, a daemon, or a second websocket.
+- Do not add a build system to the plugin runtime, a database, a daemon, or a second websocket. The separate site/ project may use Astro, and its dependencies stay in site/package.json.
 - When changing the UI, verify both light and dark themes and take a screenshot at 1280x900.
 - When changing the store or host, add or update a test that fails before the change and passes after.
 - Keep README.md, README.en.md, and docs/protocol.md in sync with behavior. If you remove a concept, remove its docs and tests in the same change.
@@ -257,3 +262,4 @@ Before reporting completion:
 7. README.md, README.en.md, and docs/protocol.md reflect the final behavior.
 8. No message/inbox/question code has been reintroduced.
 9. adrkit validate --all passes; update or add an ADR when a key decision changes.
+10. When site/, adr/, or the site workflow changed, run npm run site:build and confirm the archive builds.

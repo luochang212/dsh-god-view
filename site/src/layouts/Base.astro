@@ -1,0 +1,74 @@
+---
+import '../styles/global.css';
+import archive from '../data/decisions.json';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://luochang212.github.io').href;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <meta name="theme-color" content="#f4efe4" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="dsh-god-view" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+  </head>
+  <body>
+    <a class="skip" href="#main">跳到正文</a>
+    <header class="site-head">
+      <a class="brand" href={`${base}/`} aria-label="dsh-god-view 决策档案首页">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="4.4"></circle>
+          <circle cx="12" cy="12" r="1.4"></circle>
+          <path d="M12 3.8V1.4M12 20.2V22.6M20.2 12H22.6M3.8 12H1.4M17.8 6.2l1.7-1.7M17.8 17.8l1.7 1.7M6.2 17.8l-1.7 1.7M6.2 6.2L4.5 4.5"></path>
+        </svg>
+        <span class="brand-name">dsh-god-view</span>
+        <span class="brand-sub">决策档案</span>
+      </a>
+      <nav class="site-nav" aria-label="站点导航">
+        <a href={`${base}/decisions/folio.zh.html`}>档案</a>
+        <a href={`${base}/decisions/folio.en.html`} lang="en">English</a>
+        <a href="https://github.com/luochang212/dsh-god-view" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-foot">
+      <p>由 <code>adr/</code> 生成 · adr-kit {archive.adrKitVersion} · commit {archive.commit}</p>
+      <p>
+        <a href="https://github.com/luochang212/dsh-god-view">GitHub</a>
+        ·
+        <a href="https://github.com/luochang212/dsh-god-view/blob/main/README.md">README</a>
+        ·
+        <a href="https://github.com/luochang212/dsh-god-view/blob/main/AGENTS.md">AGENTS.md</a>
+      </p>
+    </footer>
+  </body>
+</html>

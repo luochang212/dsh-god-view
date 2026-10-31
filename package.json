@@ -43,7 +43,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "adr:validate": "adrkit validate --all",
-    "check": "npm run format:check && npm run lint && npm test && node test/host-smoke.mjs && npm run adr:validate"
+    "check": "npm run format:check && npm run lint && npm test && node test/host-smoke.mjs && npm run adr:validate",
+    "site:dev": "npm --prefix site run dev",
+    "site:build": "npm --prefix site run build"
   },
   "license": "MIT",
   "peerDependencies": {
@@ -51,7 +53,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "adr-kit": "^0.31.0",
+    "adr-kit": "^0.32.0",
     "eslint": "^10.13.0",
     "prettier": "^3.9.10"
   },

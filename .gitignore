@@ -3,3 +3,10 @@ node_modules/
 *.log
 
 screenshots/local/
+.workbuddy/
+
+site/node_modules/
+site/dist/
+site/.astro/
+site/public/decisions/
+site/src/data/decisions.json

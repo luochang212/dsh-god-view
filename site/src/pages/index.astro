@@ -1,0 +1,123 @@
+---
+import Base from '../layouts/Base.astro';
+import archive from '../data/decisions.json';
+
+const { counts, records, dates, uniquePaths, commit, adrKitVersion } = archive;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const folio = (language) => `${base}/decisions/folio.${language}.html`;
+const signal = (language) => `${base}/decisions/signal.${language}.html`;
+const statusLabels = {
+  implemented: '已交付',
+  proposed: '提议中',
+  rejected: '已否决',
+  archived: '已归档',
+};
+const pad = (number) => String(number).padStart(2, '0');
+const recordHref = (record) =>
+  record.number ? `${folio('zh')}#adr-${record.number}` : record.href;
+const description = `dsh-god-view 的架构决策档案：${counts.implemented} 条已交付决策，记录并行 agent 看板为什么这样设计。`;
+---
+
+<Base title={`决策档案 · dsh-god-view`} {description}>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">DECISION ARCHIVE / 决策档案</p>
+      <h1>上帝视角<br />背后的决策</h1>
+      <p class="lede">
+        {counts.implemented} 条架构决策，记录这块并行 agent 看板为什么长成现在这样。每条都写出问题、选择、代价，以及被否决的方案。
+      </p>
+      <div class="actions">
+        <a class="btn" href={folio('zh')}>打开决策档案 <span aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href={signal('zh')}>深色版</a>
+        <a class="link-en" href={folio('en')} lang="en">English archive ↗</a>
+      </div>
+      <p class="hero-meta">adr-kit {adrKitVersion} · {counts.implemented} 条已交付 · 更新于 {dates.latest}</p>
+    </div>
+    <aside class="hero-card" aria-label="档案摘要">
+      <p class="card-eyebrow">ARCHIVE AT A GLANCE</p>
+      <dl class="stats">
+        <div class="stat"><dt>已交付</dt><dd>{counts.implemented}</dd></div>
+        <div class="stat"><dt>决策日</dt><dd>{dates.days}</dd></div>
+        <div class="stat"><dt>涉及文件</dt><dd>{uniquePaths}</dd></div>
+        <div class="stat"><dt>归档</dt><dd>{counts.archived}</dd></div>
+      </dl>
+    </aside>
+  </section>
+
+  <section class="section" aria-labelledby="editions-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">EDITIONS / 两种版本</p>
+        <h2 id="editions-title">按读法选一版</h2>
+      </div>
+      <p>两版内容相同，都从同一批记录生成。Folio 适合顺序通读，Signal 适合检索和跳读。</p>
+    </div>
+    <div class="editions">
+      <article class="edition edition-folio">
+        <div class="edition-swatch" aria-hidden="true">
+          <span class="swatch-title">Aa</span>
+          <span class="swatch-meta">Folio / 暖纸</span>
+        </div>
+        <h3>Folio</h3>
+        <p>暖色纸面、衬线标题和编辑式排版，适合从头读完二十条决策。</p>
+        <div class="edition-links">
+          <a href={folio('zh')}>中文</a>
+          <a href={folio('en')} lang="en">English</a>
+        </div>
+      </article>
+      <article class="edition edition-signal">
+        <div class="edition-swatch" aria-hidden="true">
+          <span class="swatch-title">SIGNAL</span>
+          <span class="swatch-meta">Signal / 深色</span>
+        </div>
+        <h3>Signal</h3>
+        <p>深色仪表盘风格，对比更强，适合快速检索和跳读。</p>
+        <div class="edition-links">
+          <a href={signal('zh')}>中文</a>
+          <a href={signal('en')} lang="en">English</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="records-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">INDEX / 记录目录</p>
+        <h2 id="records-title">全部决策</h2>
+      </div>
+      <p>按编号排列。点开任意一条，进入 Folio 档案读全文，标题会定位到对应记录。</p>
+    </div>
+    <ol class="record-list">
+      {records.map((record) => (
+        <li>
+          <a class="record" href={recordHref(record)}>
+            <span class="record-num">{record.number ? `ADR ${pad(record.number)}` : statusLabels[record.status]}</span>
+            <span>
+              <span class="record-title">{record.title}<span class="record-arrow" aria-hidden="true">→</span></span>
+              <span class="record-desc">{record.description}</span>
+            </span>
+            <span class="record-meta">{record.date}<br />{statusLabels[record.status]}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="section" aria-labelledby="about-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">COLOPHON / 制作说明</p>
+        <h2 id="about-title">从记录直接生成</h2>
+      </div>
+      <p>
+        页面不另写一份摘要。目录、时间线、引用图和每条正文都来自 <code>adr/</code> 里的 Markdown，由 adr-kit 的决策档案生成器渲染，并在构建时固定到提交 <code>{commit}</code>。
+      </p>
+    </div>
+    <ul class="colophon">
+      <li><span>源文件</span><a href="https://github.com/luochang212/dsh-god-view/tree/main/adr">adr/</a></li>
+      <li><span>生成器</span><a href="https://github.com/luochang212/adr-kit">adr-kit {adrKitVersion}</a></li>
+      <li><span>托管</span><strong>Astro + GitHub Pages</strong></li>
+    </ul>
+  </section>
+</Base>

@@ -15,7 +15,19 @@ const common = {
 };
 
 export default [
-  { ignores: ['node_modules/**', 'screenshots/**', 'adr/**', '.dsh/**'] },
+  {
+    ignores: [
+      'node_modules/**',
+      'site/node_modules/**',
+      'site/dist/**',
+      'site/.astro/**',
+      'site/public/decisions/**',
+      'screenshots/**',
+      'adr/**',
+      '.dsh/**',
+      '.workbuddy/**',
+    ],
+  },
   js.configs.recommended,
   {
     files: ['**/*.{js,mjs,cjs}'],

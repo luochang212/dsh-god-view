@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
   <a href="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml"><img src="https://github.com/luochang212/dsh-god-view/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://luochang212.github.io/dsh-god-view/"><img src="https://img.shields.io/badge/ADR-archive-8a4b2a?style=flat-square" alt="ADR archive" /></a>
 </p>
 
 **Let multiple agents in one repository see each other, avoid editing the same file at the same time, and leave a reviewable occupancy timeline.**
@@ -193,6 +194,20 @@ Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) 
 - the rail lists active projects only. A project qualifies through real activity within 30 minutes, a working/blocked session, or a live lease. With none active the page is one quiet blank state (ADR 11, 16, 19).
 
 Run **adrkit list** at task start and read the relevant implemented records. Use **adrkit relevant <path>** when a task targets specific files. Add or change decisions with **adrkit record** or **adrkit propose**, and run **adrkit validate --all** before finishing.
+
+## 📚 Decision archive
+
+The full archive is published on GitHub Pages: https://luochang212.github.io/dsh-god-view/
+
+It is generated from the records in `adr/`, with Folio and Signal editions in Chinese and English. [site.yml](.github/workflows/site.yml) rebuilds and deploys it on every push; the generated HTML and index are not committed.
+
+Local preview:
+
+```sh
+cd site
+npm ci
+npm run dev
+```
 
 ## ⚙️ Configuration
 
