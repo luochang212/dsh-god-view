@@ -142,7 +142,14 @@ assert.match(promptText, /Your active change .+: wiring the panel\. Paths: src\/
 assert.doesNotMatch(promptText, /\.\. Paths/);
 decision = await pre({ name: 'write', agent: bob, arguments: { file_path: 'src/auto.ts' } }, async () => allow);
 assert.equal(decision.kind, 'deny');
-assert.match(decision.reason, /maintenance area/);
+assert.match(decision.reason, /File lease conflict/);
+// A tool result must update the session's lastAction and files (this used to
+// throw on an uninitialized pendingTouches map and silently skip the update).
+emit('tools/result', { name: 'write', agent: alice, arguments: { file_path: 'src/auto.ts' } });
+await new Promise((resolve) => setTimeout(resolve, 900));
+const touched = S.getAgent(repo, aliceId);
+assert.match(touched.lastAction, /^write src\/auto\.ts/);
+assert.ok(touched.files.includes('src/auto.ts'));
 emit('agent/status', { agent: alice, status: 'idle' });
 await new Promise((resolve) => setTimeout(resolve, 20));
 assert.equal(S.getClaim(repo, 'src/auto.ts'), undefined, 'auto claim released on idle');
@@ -190,28 +197,32 @@ assert.equal(response.status, 200);
 let snapshot = await response.json();
 assert.equal(snapshot.root, repo);
 assert.equal(snapshot.stats.agents, 3);
-assert.equal(snapshot.protocol, 3);
+assert.equal('protocol' in snapshot, false, 'the snapshot carries no protocol version');
 assert.equal('messages' in snapshot, false);
 assert.equal(path.basename(snapshot.cliPath), 'dsh-god-view.mjs', 'the advertised CLI is the renamed binary');
 assert.ok(fs.existsSync(snapshot.cliPath), 'the CLI path the host advertises exists on disk');
 
+// The board-writing routes are gone; reads and the switch are the whole HTTP surface.
 response = await fetch(base + '/claim', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ root: repo, agent: aliceId, paths: ['src/http.ts'], reason: 'http claim' }),
 });
-assert.equal(response.status, 200);
-const claimed = await response.json();
-assert.ok(claimed.claimed.length === 1);
-assert.ok(S.getClaim(repo, 'src/http.ts'));
+assert.equal(response.status, 404);
+assert.equal(S.getClaim(repo, 'src/http.ts'), undefined, 'the removed route writes nothing');
 
-response = await fetch(base + '/release', {
+// A POST body must be JSON, so a cross-site text/plain form cannot reach the handler.
+response = await fetch(base + '/coordination', {
   method: 'POST',
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ root: repo, agent: aliceId, paths: ['src/http.ts'], reason: 'http release' }),
+  headers: { 'content-type': 'text/plain' },
+  body: JSON.stringify({ enabled: false }),
 });
-assert.equal(response.status, 200);
-assert.equal(S.getClaim(repo, 'src/http.ts'), undefined);
+assert.equal(response.status, 400);
+assert.equal(
+  (await (await fetch(base + '/coordination')).json()).enabled,
+  true,
+  'the rejected body does not flip the switch',
+);
 
 // The panel switch flips the whole mode off and on through HTTP.
 response = await fetch(base + '/coordination');
@@ -246,4 +257,4 @@ const cross = await fetch(base + '/state', { headers: { origin: 'http://evil.exa
 assert.equal(cross.status, 403);
 
 await new Promise((resolve) => server.close(resolve));
-console.log('host v3 smoke ok', repo, S.listAgents(repo).length, tools.size);
+console.log('host smoke ok', repo, S.listAgents(repo).length, tools.size);

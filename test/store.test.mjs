@@ -69,7 +69,11 @@ test('snapshot exposes presence, claims, changes, and no message queue', () => {
   S.createAgent(root, { id: 'b', name: 'B' });
   S.claimPaths(root, 'a', ['src/a.ts']);
   const snap = S.snapshot(root);
-  assert.equal(snap.protocol, 3);
+  assert.equal('protocol' in snap, false, 'the snapshot carries no protocol version');
+  const config = JSON.parse(fs.readFileSync(S.paths(root).config, 'utf8'));
+  assert.equal('protocol' in config, false, 'the board config carries no version field');
+  const changeFile = path.join(S.paths(root).changes, snap.changes[0].id + '.json');
+  assert.equal('protocol' in JSON.parse(fs.readFileSync(changeFile, 'utf8')), false, 'changes carry no version field');
   assert.equal(snap.stats.agents, 2);
   assert.equal(snap.stats.claims, 1);
   assert.equal(snap.stats.changes, 1);
@@ -84,6 +88,11 @@ test('project registry and summaries are separate from the board', () => {
   const registry = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-reg-'));
   S.createAgent(root, { id: 'a', name: 'A', focus: 'work' });
   S.registerProject(registry, { root, name: path.basename(root) });
+  assert.equal(
+    'version' in JSON.parse(fs.readFileSync(S.registryFile(registry), 'utf8')),
+    false,
+    'the index carries no version',
+  );
   const projects = S.listRegisteredProjects(registry);
   assert.equal(projects.length, 1);
   assert.equal(projects[0].root, root);
@@ -215,6 +224,25 @@ test('CLI claim conflict and release timeline', () => {
   assert.doesNotMatch(recent.stdout, /\[done\]/);
 });
 
+test('CLI list hides stale agents unless --stale is passed', () => {
+  const root = repo();
+  const cli = path.resolve('bin/dsh-god-view.mjs');
+  const join = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'ghost'], { encoding: 'utf8' });
+  const id = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(join.stdout)[1].trim();
+  // Age the presence past its TTL so it counts as stale.
+  const file = path.join(S.paths(root).agents, id + '.json');
+  const agent = JSON.parse(fs.readFileSync(file, 'utf8'));
+  agent.heartbeatAt = Date.now() - (agent.ttlMs + 60_000);
+  fs.writeFileSync(file, JSON.stringify(agent));
+  assert.match(
+    spawnSync(process.execPath, [cli, 'list', '--repo', root], { encoding: 'utf8' }).stdout,
+    /No active agents/,
+  );
+  const stale = spawnSync(process.execPath, [cli, 'list', '--repo', root, '--stale'], { encoding: 'utf8' });
+  assert.match(stale.stdout, /ghost/);
+  assert.match(stale.stdout, /\(stale\)/);
+});
+
 test('CLI status done and leave release owned claims', () => {
   const root = repo();
   const cli = path.resolve('bin/dsh-god-view.mjs');
@@ -258,6 +286,71 @@ test('CLI status done and leave release owned claims', () => {
     /agent left/,
   );
 });
+test('taking over an expired lease records an expire event on the old change', () => {
+  const root = repo();
+  S.createAgent(root, { id: 'a', name: 'A' });
+  S.createAgent(root, { id: 'b', name: 'B' });
+  S.claimPaths(root, 'a', ['lib/takeover.ts'], { intent: 'work one' });
+  const file = path.join(S.paths(root).claims, S.hash('lib/takeover.ts') + '.json');
+  const claim = JSON.parse(fs.readFileSync(file, 'utf8'));
+  claim.expiresAt = Date.now() - 1000;
+  fs.writeFileSync(file, JSON.stringify(claim));
+  // No host swept the expiry; B claims the path directly.
+  const result = S.claimPaths(root, 'b', ['lib/takeover.ts'], { intent: 'work two' });
+  assert.equal(result.claimed.length, 1);
+  const oldChange = S.listChanges(root, { agent: 'a' })[0];
+  assert.equal(oldChange.state, 'expired', 'the previous change is finished, not left open');
+  assert.ok(
+    oldChange.timeline.some((event) => event.type === 'expire' && event.path === 'lib/takeover.ts'),
+    'the gantt gets a closing event instead of a forever-held bar',
+  );
+  // Re-claiming your own expired lease is a renewal, not an expiry.
+  const renewal = S.claimPaths(root, 'b', ['lib/takeover.ts'], { intent: 'still mine' });
+  assert.equal(renewal.change.timeline.filter((event) => event.type === 'expire').length, 0);
+});
+
+test('a change with an expired unswept sibling lease keeps a single final state', () => {
+  const root = repo();
+  S.createAgent(root, { id: 'a', name: 'A' });
+  S.claimPaths(root, 'a', ['p1.ts', 'p2.ts'], { intent: 'two files' });
+  const file = path.join(S.paths(root).claims, S.hash('p2.ts') + '.json');
+  const claim = JSON.parse(fs.readFileSync(file, 'utf8'));
+  claim.expiresAt = Date.now() - 1000;
+  fs.writeFileSync(file, JSON.stringify(claim));
+  // Release only p1 while p2's lease file still exists on disk.
+  S.releasePaths(root, 'a', ['p1.ts'], { summary: 'p1 done' });
+  let change = S.listChanges(root)[0];
+  assert.equal(change.state, 'claimed', 'the change stays open while a lease file remains');
+  S.expireClaims(root);
+  change = S.listChanges(root)[0];
+  assert.equal(change.state, 'expired', 'the sweep ends the change exactly once');
+  assert.equal(change.timeline.filter((event) => event.type === 'expire').length, 1);
+  // A change already done must not flip back through a later sweep.
+  const doneRoot = repo();
+  S.createAgent(doneRoot, { id: 'a', name: 'A' });
+  S.claimPaths(doneRoot, 'a', ['q.ts'], { intent: 'q' });
+  S.releasePaths(doneRoot, 'a', ['q.ts'], { summary: 'released properly' });
+  S.expireClaims(doneRoot);
+  const done = S.listChanges(doneRoot)[0];
+  assert.equal(done.state, 'done', 'a released change keeps its final state');
+  assert.equal(done.summary, 'released properly');
+});
+
+test('a legacy change without a paths array does not break claim or release', () => {
+  const root = repo();
+  S.createAgent(root, { id: 'a', name: 'A' });
+  S.claimPaths(root, 'a', ['legacy.ts'], { intent: 'legacy' });
+  S.releasePaths(root, 'a', ['legacy.ts']);
+  const change = S.getChange(root, S.listChanges(root)[0].id);
+  delete change.paths;
+  delete change.timeline;
+  fs.writeFileSync(path.join(S.paths(root).changes, change.id + '.json'), JSON.stringify(change));
+  assert.doesNotThrow(() => S.claimPaths(root, 'a', ['legacy.ts'], { intent: 'after legacy' }));
+  assert.doesNotThrow(() => S.releasePaths(root, 'a', ['legacy.ts'], { summary: 'ok' }));
+  const repaired = S.listChanges(root)[0];
+  assert.ok(Array.isArray(repaired.paths) && repaired.paths.includes('legacy.ts'));
+});
+
 test('coordination is on by default and the switch persists in the registry dir', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-switch-'));
   assert.equal(S.readCoordination(dir).enabled, true, 'no state file reads as on');
@@ -266,6 +359,11 @@ test('coordination is on by default and the switch persists in the registry dir'
   assert.equal(S.readCoordination(dir).enabled, false);
   S.writeCoordination(dir, true, { now: 2000 });
   assert.equal(S.readCoordination(dir).enabled, true);
+  assert.equal(
+    'version' in JSON.parse(fs.readFileSync(S.coordinationFile(dir), 'utf8')),
+    false,
+    'the switch file carries no version',
+  );
   fs.writeFileSync(path.join(dir, 'state.json'), 'not json');
   assert.equal(S.readCoordination(dir).enabled, true, 'unreadable state reads as on');
 });

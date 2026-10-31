@@ -215,7 +215,8 @@ async function main() {
       break;
     }
     case 'list': {
-      const agents = listAgents(root, { includeStale: opts.stale !== false });
+      // Same semantics as team_roster: stale agents are hidden unless asked for.
+      const agents = listAgents(root, { includeStale: opts.stale === true });
       if (opts.json) {
         console.log(JSON.stringify(snapshot(root), null, 2));
       } else {
