@@ -50,19 +50,27 @@ const ctx = {
   },
 };
 
-apply(ctx, { root: repo, registryDir: registry, heartbeatMs: 60_000, prompt: false });
+apply(ctx, { root: repo, registryDir: registry, heartbeatMs: 60_000, prompt: true });
 
 function emit(event, payload) {
   for (const listener of handlers.get(event) || []) listener(payload);
 }
 
 function makeAgent(id) {
+  const promptContexts = [];
   return {
+    promptContexts,
     session: { id, header: { cwd: repo } },
     status: 'idle',
     ctx: {
-      get() {
-        return undefined;
+      get(name) {
+        if (name !== 'systemPrompt') return undefined;
+        return {
+          context(entry) {
+            promptContexts.push(entry);
+            return () => {};
+          },
+        };
       },
       effect(fn) {
         return fn();
@@ -107,7 +115,7 @@ const claim = tools.get('team_claim');
 assert.deepEqual([...tools.keys()].sort(), ['team_claim', 'team_roster', 'team_status']);
 assert.ok(status && roster && claim);
 
-let out = await status.execute({ name: 'Alice', focus: 'wiring the panel' }, { agent: alice });
+let out = await status.execute({ name: 'Alice', focus: 'wiring the panel.' }, { agent: alice });
 assert.match(out.text, /Alice/);
 out = await status.execute({ name: 'Bob', focus: 'writing tests' }, { agent: bob });
 assert.match(out.text, /Alice/);
@@ -126,6 +134,12 @@ assert.ok(autoChange);
 assert.equal(autoChange.sessionId, alice.session.id);
 assert.match(autoChange.intent, /wiring the panel/);
 assert.ok(autoChange.timeline.some((event) => event.type === 'claim' && event.path === 'src/auto.ts'));
+// A focus that already ends a sentence must not gain a second stop before "Paths:".
+const promptEntry = alice.promptContexts.at(-1);
+assert.ok(promptEntry, 'the prompt context is installed');
+const promptText = promptEntry.text();
+assert.match(promptText, /Your active change .+: wiring the panel\. Paths: src\/auto\.ts/);
+assert.doesNotMatch(promptText, /\.\. Paths/);
 decision = await pre({ name: 'write', agent: bob, arguments: { file_path: 'src/auto.ts' } }, async () => allow);
 assert.equal(decision.kind, 'deny');
 assert.match(decision.reason, /maintenance area/);
