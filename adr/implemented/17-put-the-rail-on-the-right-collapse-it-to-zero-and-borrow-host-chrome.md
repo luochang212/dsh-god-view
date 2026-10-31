@@ -12,7 +12,7 @@ paths: [lib/client.js, test/ui-flow.cjs, test/client-locale.test.mjs]
 
 ## Problem
 
-The rail sat on the left, next to DSH's own left sidebar: two vertical lists competing for the same edge, and the board lost 232px to a rail that repeats what the host sidebar already names. The rail also opened with a brand block (a 36px tile and the words 上帝视角) even though the panel is already reached through the host's own sidebar entry — the same identity twice, once in the host chrome and once inside the panel.
+The rail sat on the left, next to DSH's own left sidebar: two vertical lists competing for the same edge, and the board lost 232px to a rail that repeats what the host sidebar already names. The rail also opened with a brand block (a 36px tile and the words 上帝视角) even though the panel is already reached through the host's own sidebar entry. That showed the same identity twice, once in the host chrome and once inside the panel.
 
 The chrome had drifted from the host's own controls. Our switch was 34x20 and turned **green** when on; DSH's is 36x20 and turns **brand** (near-black in light, white in dark). The rail mixed its own colours with `color-mix` and used a 10px radius, while the host exposes `--dsw-specific-sidebar-fill`, `--dsw-alias-border-l1`, `--dsw-alias-interactive-bg-hover`, `--dsw-alias-bg-multi-select`, and a radius scale that the rest of the app uses.
 
@@ -20,13 +20,13 @@ The chrome had drifted from the host's own controls. Our switch was 34x20 and tu
 
 **The rail is on the right.** It renders after the content in the DOM and is ordered to the right edge (`order: 2`), with `border-left: border-l1` instead of a right border. Width is 264px, the host's `SIDEBAR_MIN`, narrowing to 220px under 820px and stacking above the content under 700px.
 
-**It collapses to zero.** A 28px icon button in the topbar — the host's compact-button size, 8px radius, `interactive-bg-hover` hover, 2px focus ring — toggles the rail. The button carries `aria-expanded`, `aria-controls="pt-rail"`, and a mirrored panel icon while the rail is open. The preference is stored in `localStorage` (`dsh-god-view:rail`), so it survives a reload.
+**It collapses to zero.** A 28px icon button in the topbar toggles the rail. It uses the host's compact-button size, 8px radius, `interactive-bg-hover` hover, and a 2px focus ring. The button carries `aria-expanded`, `aria-controls="pt-rail"`, and a mirrored panel icon while the rail is open. The preference is stored in `localStorage` (`dsh-god-view:rail`), so it survives a reload.
 
-**The rail has no brand block.** Its header is a single 56px row that lines up with the topbar — caption and count — so the top hairline runs unbroken across the whole panel. The brand mark now appears only in the host sidebar entry and on the blank page.
+**The rail has no brand block.** Its header is a single 56px row that lines up with the topbar and holds the caption and count, so the top hairline runs unbroken across the whole panel. The brand mark now appears only in the host sidebar entry and on the blank page.
 
 **The chrome uses host values, not ours.** The switch is rebuilt to the host's own spec: 36x20, 2px padding, 999px radius, `border-l3` track, `brand-primary` when on, 16px thumb (`switch-thumb` off, `label-primary-foreground` on, `translateX(16px)`), 2px focus ring, 0.5 opacity when disabled. Rail fill is `specific-sidebar-fill`; row hover is `interactive-bg-hover`; the selected row is `bg-multi-select` with a brand marker on the rail's inner edge; the footer divider is `border-l1`. All hand-mixed tints and the tinted page are gone: the page is `bg-base`.
 
-**Cards keep their form.** The two section cards stay — in-card headers, hairline rows, `elevation-soft` and a 12px radius — but on the host's base surface instead of a tint we invented. The card is the one shape this panel adds; everything inside it is host vocabulary.
+**Cards keep their form.** The two section cards stay with their in-card headers, hairline rows, `elevation-soft`, and 12px radius. They now sit on the host's base surface instead of a tint we invented. The card is the one shape this panel adds; everything inside it is host vocabulary.
 
 ## Alternatives considered
 

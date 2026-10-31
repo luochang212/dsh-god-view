@@ -12,13 +12,13 @@ paths: [lib/client.js, test/client-locale.test.mjs, test/ui-flow.cjs]
 
 ## Problem
 
-The rail listed every repository in the registry, grouped into Active and Idle. Most of those idle rows were boards with no presence, no lease, and no change at all — they existed only because a session had once been opened there. Opening one produced a page that was structurally complete and informationally empty: an empty Sessions box, an empty Gantt box, an empty details list. That is noise that invites a click and then repays it with nothing.
+The rail listed every repository in the registry, grouped into Active and Idle. Most of those idle rows were boards with no presence, no lease, and no change at all. They existed only because a session had once been opened there. Opening one produced a page that was structurally complete and informationally empty: an empty Sessions box, an empty Gantt box, an empty details list. That is noise that invites a click and then repays it with nothing.
 
 Grouping active and idle did not help: the idle group was the larger half of the rail, and the empty pages behind it looked identical to a working project whose board had simply not loaded yet.
 
 ## Decision
 
-The rail lists only boards with current activity — status `active` (a live presence) or `claimed` (a live lease). An idle board is not rendered at all. The caption counts what is listed ("活跃项目 N").
+The rail lists only boards with current activity. Such a board has status `active` (a live presence) or `claimed` (a live lease). An idle board is not rendered at all. The caption counts what is listed ("活跃项目 N").
 
 Selection follows that rule: if the selected board goes idle, the client moves to the first active board on the next poll instead of keeping a dead page open. If no board is active, the panel shows one blank page: the brand glyph at low opacity and a single line explaining that projects appear once a session works here (or, with coordination off, that the switch above turns it on). The topbar reads "没有活跃项目" and drops the path line. There are no section headers, no empty boxes, no dashed placeholders.
 

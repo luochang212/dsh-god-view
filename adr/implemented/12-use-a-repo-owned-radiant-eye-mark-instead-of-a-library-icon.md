@@ -12,7 +12,7 @@ paths: [lib/client.js, test/client-locale.test.mjs]
 
 ## Problem
 
-The rail's brand tile borrowed lucide's `eye`. It worked, but it is the same glyph a thousand applications use, and it says "view" rather than "watch over everything, from above". The reference layout (ml-auto) gets its character from a single, well-chosen mark — lucide's `Lighthouse` at 22px inside an accent-tinted square — not from a decorative container.
+The rail's brand tile borrowed lucide's `eye`. It worked, but it is the same glyph a thousand applications use, and it says "view" rather than "watch over everything, from above". The reference layout (ml-auto) gets its character from a single, well-chosen mark. That mark is lucide's `Lighthouse` at 22px inside an accent-tinted square, not a decorative container.
 
 The mark has to survive 18px (sidebar entry), 19px (rail brand tile) and 26px (blank page), in both host themes, with no build step and no new dependency.
 

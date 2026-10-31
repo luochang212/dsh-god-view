@@ -12,7 +12,7 @@ paths: [lib/client.js, test/ui-flow.cjs]
 
 ## Problem
 
-The rail carried a header (caption plus a count) and a footer (two counts). Both restated data that is already on the rows or on the board: each project row shows its own working/blocked/claims/change numbers, and the content area shows the sessions and claims themselves. On a rail whose job is navigation, the header and footer were furniture — and they stopped the rail from being what it should be: one list.
+The rail carried a header (caption plus a count) and a footer (two counts). Both restated data that is already on the rows or on the board: each project row shows its own working/blocked/claims/change numbers, and the content area shows the sessions and claims themselves. On a rail whose job is navigation, the header and footer were furniture. They stopped the rail from being one list.
 
 The rail toggle had a second problem. It lived in the topbar's right edge, which is the *content's* right edge. With the rail open, that edge sits 264px away from the panel's right edge; collapsing the rail moved the button 264px to the right, so the same click could not be repeated in place. DSH does not do this: its sidebar toggle sits in the sidebar's own header and stays at the same screen position when the sidebar collapses, and the right panel's expand button behaves the same way.
 
@@ -20,7 +20,7 @@ The rail toggle had a second problem. It lived in the topbar's right edge, which
 
 **The rail is a bare list.** No caption, no count, no footer. It is a single scrolling list of active projects, labelled for assistive technology with `aria-label="活跃项目"`.
 
-**The toggle is pinned to the panel's top-right corner.** It is absolutely positioned 14px from the top and right of the panel, 28x28, and rendered once at the root of the panel rather than inside the topbar. The rail opens with a 56px top band — the topbar's height, which also leaves 14px of clearance under the 28px button — and the list adds a 6px inset, so the first row starts 20px below the button; when the rail is closed, the topbar's action group reserves 44px on the right so the coordination switch does not collide with it. The button therefore occupies the same rectangle open or closed — clicking twice in the same spot opens and closes the rail.
+**The toggle is pinned to the panel's top-right corner.** It is absolutely positioned 14px from the top and right of the panel, 28x28, and rendered once at the root of the panel rather than inside the topbar. The rail opens with a 56px top band that matches the topbar's height and also leaves 14px of clearance under the 28px button. The list adds a 6px inset, so the first row starts 20px below the button; when the rail is closed, the topbar's action group reserves 44px on the right so the coordination switch does not collide with it. The button therefore occupies the same rectangle open or closed, so clicking twice in the same spot opens and closes the rail.
 
 This is the same geometry DSH uses for its own sidebar toggle: the control is anchored to the panel edge, and the rail grows or disappears beside it.
 

@@ -12,7 +12,7 @@ paths: [lib/client.js, test/client-locale.test.mjs]
 
 ## Problem
 
-Under the Gantt sat a collapsible list of every claim, release, and expire event. It restated what the bars already encode — one line per event, in the same order as the lanes above it — and it was the only thing below the Gantt, so the content area ended in a wall of text that the eye had to skip on every visit.
+Under the Gantt sat a collapsible list of every claim, release, and expire event. It restated what the bars already encode. Each event got one line, in the same order as the lanes above it. It was the only thing below the Gantt, so the content area ended in a wall of text that the eye had to skip on every visit.
 
 The exact times it carried were already available: each bar exposes a positioned tooltip on hover and on keyboard focus with the file, actor, start, end, duration, and intent/summary. The uncapped record lives in the board files and in the CLI.
 

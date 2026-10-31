@@ -59,7 +59,7 @@ Three boundaries are part of the decision:
 
 This amends [ADR 5](5-keep-the-board-to-one-read-only-screen-and-three-concepts.md)
 in exactly one place: the panel may carry one mode control. It stays read-only
-otherwise — no data input, no composer, no reply box, no question queue.
+otherwise. It has no data input, no composer, no reply box, and no question queue.
 
 ## Alternatives considered
 

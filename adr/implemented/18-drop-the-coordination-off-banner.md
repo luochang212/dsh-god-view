@@ -14,7 +14,7 @@ paths: [lib/client.js, docs/protocol.md]
 
 With coordination off the panel drew a full-width strip under the topbar: "协作已关闭：不记录文件占用，也不阻断并发写入。", plus a warning when the host was too old to carry the route, plus a line when more than one session was running.
 
-The switch sits two rows above it and already shows the state — track colour, thumb position, `aria-checked`. The strip restated that on every visit, took a whole row away from the board, and the "N sessions are running" sentence told the human something they could not act on in the panel. On a panel whose whole argument is a quiet screen, it was the loudest thing on a dormant install.
+The switch sits two rows above it and already shows the state through its track colour, thumb position, and `aria-checked`. The strip restated that on every visit, took a whole row away from the board, and the "N sessions are running" sentence told the human something they could not act on in the panel. On a panel whose whole argument is a quiet screen, it was the loudest thing on a dormant install.
 
 ## Decision
 

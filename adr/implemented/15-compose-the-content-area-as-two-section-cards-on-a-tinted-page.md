@@ -1,7 +1,7 @@
 ---
 status: implemented
 date: 2026-10-31
-description: Read when changing the content area's surfaces — section cards, their headers, row dividers, page tint, or the brand tile.
+description: Read when changing the content area's surfaces. Those surfaces are the section cards, their headers, row dividers, page tint, and the brand tile.
 raised-by: human
 decided-by: human
 created: 2026-10-31
@@ -12,7 +12,7 @@ paths: [lib/client.js, test/client-locale.test.mjs]
 
 ## Problem
 
-After the event list went away (ADR 14) the content area held two things: the session list and the Gantt. Both were styled as their own bordered boxes — every session row was a 1px outlined card, the Gantt was another — with their section headings floating above them, outside anything. On a white page with no shadows, that read as a pile of outlined widgets rather than a composed screen, and the whiteness made the page feel unfinished even when it was full.
+After the event list went away (ADR 14) the content area held two things: the session list and the Gantt. Both were styled as their own bordered boxes. Every session row was a 1px outlined card, and the Gantt was another. Their section headings floated above them, outside anything. On a white page with no shadows, that read as a pile of outlined widgets rather than a composed screen, and the whiteness made the page feel unfinished even when it was full.
 
 The reference layout (ml-auto) gets its weight from a tinted page with white cards: hairline border, 12px radius, a very soft shadow, and a table-card that owns its header.
 

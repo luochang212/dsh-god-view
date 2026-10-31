@@ -13,7 +13,7 @@ paths: [lib/client.js, test/client-locale.test.mjs, test/ui-lang.cjs]
 
 ## Problem
 
-The board picked its language once, when the browser bundle was evaluated, from `document.documentElement.lang`. The Host serves that attribute as a static `en` and only rewrites it after its locale plugin has resolved the active language — an asynchronous native read on desktop. A cold start could therefore evaluate the bundle first and freeze the whole board in English while the rest of the application was Chinese, and a later language change never reached the panel at all because the value had been captured into a module constant.
+The board picked its language once, when the browser bundle was evaluated, from `document.documentElement.lang`. The Host serves that attribute as a static `en` and only rewrites it after its locale plugin has resolved the active language. On desktop that resolution is an asynchronous native read. A cold start could therefore evaluate the bundle first and freeze the whole board in English while the rest of the application was Chinese, and a later language change never reached the panel at all because the value had been captured into a module constant.
 
 The reported symptom was a board whose sidebar entry said `Agents` and whose panel said `Agent Team` while the surrounding UI was Chinese, appearing only on some launches.
 
@@ -39,7 +39,7 @@ The sidebar entry's label is static registration metadata rather than rendered c
 
 ## Consequences
 
-A cold start shows the chosen language the first time, and an open panel follows a language switch without a page refresh. The plugin now requires the `locale` client service: on a host that never provides it the plugin does not activate. That is deliberate — without the service there is no authority for the language, and guessing is what produced the bug.
+A cold start shows the chosen language the first time, and an open panel follows a language switch without a page refresh. The plugin now requires the `locale` client service: on a host that never provides it the plugin does not activate. That is deliberate. Without the service there is no authority for the language, and guessing is what produced the bug.
 
 Regression coverage lives in `test/client-locale.test.mjs`, which drives the real bundle against a fake host with a stale `en` document and a `zh` locale and asserts both label re-registration and render-time labels, and in `test/ui-lang.cjs`, which reproduces a cold desktop start with a delayed native bridge against the running host.
 
