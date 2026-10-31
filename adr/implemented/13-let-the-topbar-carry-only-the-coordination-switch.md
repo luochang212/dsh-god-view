@@ -24,7 +24,7 @@ Meanwhile the topbar is the quietest strip in the UI. Spending it on a redundant
 
 The topbar's right side carries exactly one element: the switch. It keeps role=switch, aria-checked, data-coordination=on|off|unavailable, and the 34x20 track; it loses its visible label, and gains aria-label="协作开关" so the control still has a name for screen readers.
 
-The live indicator is gone: no dot, no 实时/连接中 text. Connection and loading states surface where they matter instead. The loading line appears while the first read is in flight. The error copy with its retry advice appears when the host is unreachable. The coordination-off banner sits under the topbar when the mode is off.
+The live indicator is gone: no dot, no 实时/连接中 text. Connection and loading states surface where they matter instead. The loading line appears while the first read is in flight. The error copy with its retry advice appears when the host is unreachable.
 
 This supersedes the "live state" part of [ADR 10](10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md). The rest of that shell stands.
 
