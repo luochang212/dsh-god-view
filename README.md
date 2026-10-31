@@ -9,7 +9,6 @@
 
 <p>
   <img src="https://img.shields.io/badge/version-0.3.0-0e7490?style=flat-square" alt="version" />
-  <img src="https://img.shields.io/badge/protocol-3-0e7490?style=flat-square" alt="protocol" />
   <img src="https://img.shields.io/badge/DSH-plugin-0e7490?style=flat-square" alt="DSH plugin" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
@@ -127,7 +126,6 @@ ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
       config:
         heartbeatMs: 15000
         ttlMs: 60000
-        claimPolicy: auto
         autoClaimTtlMs: 600000
         releaseAutoOnIdle: true
 ```
@@ -190,7 +188,7 @@ node bin/dsh-god-view.mjs leave --id <id>
 - 每个仓库一块 board，全局索引只做发现和汇总，不合并 claim，也不加跨项目锁（ADR 1）。
 - 没有消息、收件箱或待回复；focus 是会话属性，面板除了协作开关只读（ADR 2、5）。
 - 占用是 claim/release 时间轴，按文件渲染成甘特图；甘特图是唯一的时间轴界面（ADR 3、14）。
-- 协作默认开启，由人从顶栏关掉；关闭时不写任何 board 状态（ADR 9、20）。
+- 协作默认开启，由人从顶栏关掉；关闭时不写任何 board 状态（ADR 20，取代 ADR 9 的默认值）。
 - 侧栏只列活跃项目：最近 30 分钟有真实活动、有进行中/受阻会话，或有文件占用；一个都没有时是一整页安静的空状态（ADR 11、16、19）。
 
 开始任务前运行 **adrkit list**，读取相关的 implemented 记录；改动特定文件时运行 **adrkit relevant <path>**。新增/变更决策用 **adrkit record** 或 **adrkit propose**，完成前运行 **adrkit validate --all**。
@@ -217,18 +215,10 @@ npm run dev
 | registryDir       | ~/.dsh/parallel | 全局项目索引目录                        |
 | heartbeatMs       | 20000           | presence 续租间隔                       |
 | ttlMs             | 90000           | presence TTL                            |
-| claimPolicy       | auto            | off / advisory / require / auto         |
 | autoClaimTtlMs    | 600000          | auto claim 的 TTL                       |
 | releaseAutoOnIdle | true            | 回合结束后释放 auto claim               |
 
-claimPolicy 的差异：
-
-- **auto**：write/edit 自动 claim，冲突拒绝；
-- **require**：没有 claim 就拒绝写入；
-- **advisory**：只提示，不阻止；
-- **off**：关闭 write guard。
-
-write guard 只覆盖 write/edit；bash 或 run_code 里的 shell 重定向不在保护范围内。
+write/edit 自动 claim，与他人的活跃 claim 冲突时拒绝写入；面板与 agent 上下文始终展示当前租约。write guard 只覆盖 write/edit；bash 或 run_code 里的 shell 重定向不在保护范围内。
 
 ## 🧪 开发与测试
 
@@ -246,6 +236,7 @@ UI 测试需要先启动桌面 DSH、Playwright，以及本机登录 cookie。�
 
 ## ⚠️ 边界
 
+- 只跟踪 DSH 内部的会话和 write/edit。
 - 不做跨项目锁；不同仓库的并行工作互不阻塞。
 - 项目列表来自 host 跟踪过的 root + 全局注册表；从未打开过的项目不会出现。
 - claim 是精确路径，不覆盖目录和 glob。

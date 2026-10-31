@@ -12,8 +12,7 @@
         registryDir: ~/.dsh/parallel
         heartbeatMs: 15000
         ttlMs: 60000
-        # auto (default): write/edit auto-claim and deny live conflicts.
-        claimPolicy: auto
+        # write/edit auto-claim and deny live conflicts.
         autoClaimTtlMs: 600000
         releaseAutoOnIdle: true
         prompt: true

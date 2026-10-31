@@ -10,6 +10,12 @@ paths: [lib/client.js, test/ui-flow.cjs]
 
 # ADR: 10 Treat the panel as an app shell (logo rail, topbar, scrolling content), not a padded document
 
+> **Partly superseded by [ADR 17](17-put-the-rail-on-the-right-collapse-it-to-zero-and-borrow-host-chrome.md)
+> and [ADR 19](19-strip-the-rail-to-a-bare-list-and-pin-the-toggle-to-the-panel-corner.md)
+> (both 2026-10-31).** The app shell, topbar, and scrolling content remain; the
+> rail no longer matches this ADR: it moved to the right edge, collapsed to a
+> bare 264px list without logo area, caption, or footer counts.
+
 ## Problem
 
 The board was rendered as a padded page inside the host: a title row (glyph, title, live status, switch) followed by a banner and a two-column grid, all inset by 24/32px. The project rail began below that header, so it read as a sidebar floating inside a document rather than as the panel's navigation. With the rail no longer flush to the panel edges, the first screen of a 1000×900 panel wasted horizontal space and looked like a different product next to the host chrome.

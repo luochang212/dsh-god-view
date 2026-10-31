@@ -10,6 +10,8 @@ paths: [lib/store.js, lib/index.js, lib/client.js]
 
 # ADR: 6 Record conversation identity, intent, paths, and release state on every change
 
+> **Amended by [ADR 23](23-drop-the-board-protocol-version.md):** the board carries no protocol number any more, so a shape change ships with docs and tests instead of a bump. The identity fields and the rest of the decision stand.
+
 ## Problem
 
 A lease that records only a path and an owner answers "who holds this?" but not the questions the user actually asked: which conversation made the change, what was it trying to do, which files were involved, and was it released or still open?

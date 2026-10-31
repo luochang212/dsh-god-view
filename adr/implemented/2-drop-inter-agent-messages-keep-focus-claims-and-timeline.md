@@ -10,6 +10,8 @@ paths: [lib/store.js, lib/index.js, lib/client.js, bin/dsh-god-view.mjs]
 
 # ADR: 2 Drop inter-agent messages; keep focus, claims, and timeline
 
+> **Amended by [ADR 23](23-drop-the-board-protocol-version.md):** the board no longer carries a protocol number, so the "Protocol 3" in this record is history, not a version to bump. The removal of messages stands.
+
 ## Problem
 
 An earlier version added direct messages with needsReply, pending/read state, reply_to, a TTL, and an "Agent questions" section. The feature grew a second state machine beside the file leases: a message could be delivered, read, answered, expired, or left stale; the UI needed an inbox; and the panel needed a human-input story even though the core board is supposed to be agent-operated and read-only.

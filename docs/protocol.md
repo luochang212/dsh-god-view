@@ -1,6 +1,6 @@
-# Parallel team board protocol (v3)
+# Parallel team board file format
 
-Protocol v3 keeps three concepts: **presence**, **claims/changes**, and a **per-repository project board**. Messages are not part of v3.
+The board keeps three concepts: **presence**, **claims/changes**, and a **per-repository project board**. Messages are not part of it.
 
 ## Location
 
@@ -25,7 +25,6 @@ A board is always repository-local. The index only lists roots; it never merges 
 
 ```json
 {
-  "protocol": 3,
   "id": "dsh-demo-agent",
   "name": "parallel builder",
   "sessionId": "session-demo-0001",
@@ -34,15 +33,22 @@ A board is always repository-local. The index only lists roots; it never merges 
   "role": "agent",
   "status": "active | idle | blocked | done",
   "focus": "one line about the current work",
+  "lastAction": "edit lib/store.js",
   "plan": null,
   "files": [],
   "branch": null,
+  "pid": 12345,
+  "hostname": "macbook.local",
+  "cwd": "/abs/repo",
   "startedAt": 1793280396000,
   "updatedAt": 1793280396000,
   "heartbeatAt": 1793280396000,
-  "ttlMs": 90000
+  "ttlMs": 90000,
+  "expiresAt": 1793280486000
 }
 ```
+
+`lastAction` and `files` (most recent first, capped) describe the session's latest tool use; `finishedAt` is set once the status becomes `done`, `pid`/`hostname`/`cwd` identify the writing process. All are advisory except `status`.
 
 Focus is a current property, not a message. It has no reply state. Heartbeats renew it while the agent is tracked; stale presence is flagged, hidden from the panel's session list, and omitted from team_roster unless `include_stale` is true. `heartbeatAt` + `ttlMs` prove only that the host process is alive; `updatedAt` is the last real activity (a user/subagent prompt, a turn change, a tool result, or team_status). The heartbeat is never treated as activity. `done` is the wire state for a closed session; the panel/CLI display it as `ended`.
 
@@ -52,7 +58,6 @@ Claim file:
 
 ```json
 {
-  "protocol": 3,
   "path": "lib/store.js",
   "agent": "dsh-demo-agent",
   "agentName": "parallel builder",
@@ -62,17 +67,20 @@ Claim file:
   "mode": "edit | review",
   "auto": false,
   "intent": "timeline: claim/release observability",
+  "reason": "timeline: claim/release observability",
   "createdAt": 1793280396000,
   "ttlMs": 1800000,
-  "expiresAt": 1793282196000
+  "expiresAt": 1793282196000,
+  "renewedAt": 1793281296000
 }
 ```
+
+`reason` duplicates the intent for readers that only look at a claim file, and `renewedAt` is stamped by each renewal. Leases (auto and explicit) are renewed by the owning host's heartbeat while its session is running; the TTL bounds leases whose owner is gone.
 
 Change file:
 
 ```json
 {
-  "protocol": 3,
   "id": "ch-mvtntlri-ebc66424",
   "agent": "dsh-demo-agent",
   "agentName": "parallel builder",
@@ -111,7 +119,7 @@ Lifecycle:
 - claim creates or extends the agent's active change and appends a claim event per path;
 - release removes the lease and appends a release event; when no leases remain, the change becomes done with the release summary. The CLI displays `done` as `released`; the panel shows the timeline and summary, not a state label. It only means the leases were released, not that the work was committed;
 - auto release on idle uses summary turn ended;
-- expired leases are removed and append an expire event; when no leases remain, the change becomes expired;
+- expired leases are removed and append an expire event; when no leases remain, the change becomes expired. A lease that expired unswept (its owner gone) and is then taken over by another agent is recorded the same way, so no change keeps an open claim forever. A lease re-claimed by its own agent is a renewal and keeps its original createdAt;
 - one active change per agent; a new claim joins it unless it was released.
 
 Release accepts a summary. Expiry uses lease expired. The timeline is capped at 200 events per change.
@@ -121,7 +129,7 @@ Release accepts a summary. Expiry uses lease expired. The timeline is capped at 
 Coordination is on by default. The switch is a single global file in the registry directory:
 
 ```json
-{ "version": 1, "enabled": true, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
+{ "enabled": true, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
 ```
 
 - **On (default, or file missing/unreadable):** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
@@ -133,21 +141,19 @@ Coordination is on by default. The switch is a single global file in the registr
 
 Step 0: the guard only runs while the coordination switch is on.
 
-With claimPolicy: auto:
-
 1. resolve the write/edit target against the session cwd, then the repository root;
 2. deny if a live lease belongs to another agent;
 3. otherwise create an auto lease in the current change;
 4. release auto leases on idle; release all leases when the session is disposed.
 
-claimPolicy: require denies a write with no lease. advisory and off disable the guard. Shell edits are outside the guard.
+There is one guard policy. Writes and edits are auto-claimed and live conflicts are denied; the panel and the agents' prompt context always show the current leases. Shell edits are outside the guard.
 
 ## Project registry
 
 Each host writes a global index entry when it tracks a root:
 
 ```json
-{ "version": 1, "projects": [{ "root": "/abs/repo", "name": "repo", "lastSeenAt": 1793280396000 }] }
+{ "projects": [{ "root": "/abs/repo", "name": "repo", "lastSeenAt": 1793280396000 }] }
 ```
 
 GET /projects reads the union of the host's known roots and this index, then computes a summary from each board:
@@ -169,27 +175,23 @@ GET /projects reads the union of the host's known roots and this index, then com
 }
 ```
 
-`active` is the number of live non-stale sessions that are not done, including idle ones; it is a session count, not a "working now" count. `working` counts sessions with status `active`, and `blocked` counts status `blocked`. `lastActivityAt` is the newest `updatedAt`, claim timestamp, or change timestamp. It is never a heartbeat. A project's `status` is `active` when a session is working or blocked, or when `lastActivityAt` is within 30 minutes (`ACTIVE_WINDOW_MS`); it is `claimed` when only live leases remain; otherwise `idle`. Projects are sorted by last activity. Selecting a project only changes which board is read.
+`active` is the number of live non-stale sessions that are not done, including idle ones; it is a session count, not a "working now" count. `working` counts sessions with status `active`, and `blocked` counts status `blocked`. `lastActivityAt` is the newest `updatedAt`, claim timestamp, or change timestamp. It is never a heartbeat. A project's `status` is `active` when a session is working or blocked; it is `claimed` when no session is working or blocked but live leases remain; otherwise it is `active` when `lastActivityAt` is within 30 minutes (`ACTIVE_WINDOW_MS`) and `idle` beyond that. Projects are sorted by last activity. Selecting a project only changes which board is read.
 
 ## HTTP surface
 
-| Method | Path              | Body                             | Result                          |
-| ------ | ----------------- | -------------------------------- | ------------------------------- |
-| GET    | /health           | -                                | ok, pid, current root           |
-| GET    | /projects         | -                                | recent projects and status      |
-| GET    | /state?root=<abs> | -                                | agents, claims, changes, stats  |
-| GET    | /coordination     | -                                | enabled, trackedSessions, roots |
-| POST   | /coordination     | enabled                          | flip the switch                 |
-| POST   | /presence         | root, id, patch                  | update presence                 |
-| POST   | /claim            | root, agent, paths, mode, reason | claim or conflicts              |
-| POST   | /release          | root, agent, paths, force        | release and change state        |
+| Method | Path              | Body    | Result                          |
+| ------ | ----------------- | ------- | ------------------------------- |
+| GET    | /health           | -       | ok, pid, current root           |
+| GET    | /projects         | -       | recent projects and status      |
+| GET    | /state?root=<abs> | -       | agents, claims, changes, stats  |
+| GET    | /coordination     | -       | enabled, trackedSessions, roots |
+| POST   | /coordination     | enabled | flip the switch                 |
 
-/state also returns `coordination: { enabled, trackedSessions, roots }`.
+/state also returns `coordination: { enabled, trackedSessions, roots }`. A POST body must be sent as `application/json`; any other content type is rejected before parsing.
 
-The panel never mutates a board. Its only write is POST /coordination, which flips the global switch in the registry directory. The other routes exist for the host and CLI; cross-origin requests are denied.
+The panel never mutates a board. Its only write is POST /coordination, which flips the global switch in the registry directory. Reads serve the panel; there are no board-writing HTTP routes — the host writes through the store directly and the CLI uses the same files. Cross-origin requests are denied.
 
-## v2 to v3
+## Compatibility
 
-- Messages are removed. Old messages directories are ignored and can be deleted.
+- Existing boards may carry fields the board no longer writes, such as an old message queue. Unknown fields are ignored, and old message directories can be deleted.
 - Presence, claim, and change files remain valid. Missing timeline arrays are synthesized from createdAt/releasedAt.
-- The board config is rewritten to protocol 3 on first use.

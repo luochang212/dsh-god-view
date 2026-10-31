@@ -1,15 +1,22 @@
 ---
-status: implemented
-date: 2026-10-30
+status: superseded
+date: 2026-10-31
 description: Coordination is off by default and one panel switch turns it on; dormant means no board writes, no leases, and no write guard.
 raised-by: human
 decided-by: human
 created: 2026-10-30
 commit: 0a5ca5e
 paths: [lib/index.js, lib/client.js, lib/store.js, test/host-smoke.mjs, test/ui-flow.cjs]
+superseded-by: 20
+archived: 2026-10-31
+archive-reason: coordination is on by default (ADR 20); this record still documents what a switched-off host does
 ---
 
 # ADR: 9 Default coordination off behind one panel switch
+
+> **Superseded by [ADR 20](../implemented/20-turn-coordination-on-by-default.md) (2026-10-31):
+> coordination is on by default.** The dormant-host behavior described here still
+> governs what an explicitly switched-off host does; only the default flipped.
 
 ## Problem
 
@@ -57,7 +64,7 @@ Three boundaries are part of the decision:
 - **It never turns itself on.** When the host sees more than one session while
   coordination is off, the panel says so; the human decides.
 
-This amends [ADR 5](5-keep-the-board-to-one-read-only-screen-and-three-concepts.md)
+This amends [ADR 5](../implemented/5-keep-the-board-to-one-read-only-screen-and-three-concepts.md)
 in exactly one place: the panel may carry one mode control. It stays read-only
 otherwise. It has no data input, no composer, no reply box, and no question queue.
 

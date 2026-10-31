@@ -1,7 +1,7 @@
 ---
 status: implemented
 date: 2026-10-30
-description: Read when changing lease acquisition, renewal, release, expiry, the write guard, or claimPolicy behavior.
+description: Read when changing lease acquisition, renewal, release, expiry, or write-guard behavior.
 raised-by: agent
 decided-by: human
 created: 2026-10-30
@@ -9,6 +9,8 @@ paths: [lib/store.js, lib/index.js, bin/dsh-god-view.mjs]
 ---
 
 # ADR: 7 Use short-lived auto leases plus explicit planned leases
+
+> **Amended by [ADR 22](22-keep-exactly-one-write-guard-policy-auto.md):** the `claimPolicy` knob is gone. The auto behavior described below is the only policy; `require`, `advisory`, and `off` no longer exist. The auto/explicit lease mechanics remain as decided here.
 
 ## Problem
 

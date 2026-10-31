@@ -9,7 +9,6 @@
 
 <p>
   <img src="https://img.shields.io/badge/version-0.3.0-0e7490?style=flat-square" alt="version" />
-  <img src="https://img.shields.io/badge/protocol-3-0e7490?style=flat-square" alt="protocol" />
   <img src="https://img.shields.io/badge/DSH-plugin-0e7490?style=flat-square" alt="DSH plugin" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />
@@ -127,7 +126,6 @@ Append this to $PROFILE/cordis.patch.yml:
       config:
         heartbeatMs: 15000
         ttlMs: 60000
-        claimPolicy: auto
         autoClaimTtlMs: 600000
         releaseAutoOnIdle: true
 ```
@@ -190,7 +188,7 @@ Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) 
 - one board per repository; the global index only discovers and summarizes, never merges claims, and adds no cross-project lock (ADR 1).
 - no messages, inbox, or reply state; focus is a session property, and the panel is read-only apart from the coordination switch (ADR 2, 5).
 - occupancy is a claim/release timeline rendered as a per-file Gantt; the Gantt is the only timeline surface (ADR 3, 14).
-- coordination is on by default and a human turns it off from the topbar; off writes no board state (ADR 9, 20).
+- coordination is on by default and a human turns it off from the topbar; off writes no board state (ADR 20, which supersedes ADR 9's default).
 - the rail lists active projects only. A project qualifies through real activity within 30 minutes, a working/blocked session, or a live lease. With none active the page is one quiet blank state (ADR 11, 16, 19).
 
 Run **adrkit list** at task start and read the relevant implemented records. Use **adrkit relevant <path>** when a task targets specific files. Add or change decisions with **adrkit record** or **adrkit propose**, and run **adrkit validate --all** before finishing.
@@ -217,18 +215,10 @@ npm run dev
 | registryDir       | ~/.dsh/parallel | Directory for the global project index                            |
 | heartbeatMs       | 20000           | Presence renewal interval                                         |
 | ttlMs             | 90000           | Presence TTL                                                      |
-| claimPolicy       | auto            | off / advisory / require / auto                                   |
 | autoClaimTtlMs    | 600000          | Auto-claim TTL                                                    |
 | releaseAutoOnIdle | true            | Release auto claims when the turn ends                            |
 
-claimPolicy values:
-
-- **auto**: auto-claim on write/edit, deny conflicts;
-- **require**: deny a write with no claim;
-- **advisory**: warn but do not block;
-- **off**: disable the write guard.
-
-The write guard covers write/edit only. Shell redirection through bash or run_code is outside it.
+Writes and edits are auto-claimed; a live claim by another agent denies the write. The board and the agents' prompt context always show the current leases. The write guard covers write/edit only. Shell redirection through bash or run_code is outside it.
 
 ## 🧪 Development and testing
 
@@ -246,6 +236,7 @@ Refresh the page after client changes; restart the host after host changes. Deve
 
 ## ⚠️ Limitations
 
+- Only DSH sessions and DSH write/edit are tracked.
 - No cross-project lock; unrelated repositories can work in parallel.
 - The project list comes from roots tracked by the host plus the global registry; a never-opened project does not appear.
 - Claims are exact paths, not directories or globs.

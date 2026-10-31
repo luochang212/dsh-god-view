@@ -10,7 +10,7 @@ It has exactly three jobs:
 2. Lease files so two agents do not edit the same path at the same time.
 3. Show a claim/release timeline (who held which file, from when, until when).
 
-Version: 0.3.0. Protocol: 3. The plugin has no build step; runtime is plain ESM JavaScript on Node >= 20. The separate `site/` project builds the ADR archive with Astro.
+Version: 0.3.0. The plugin has no build step; runtime is plain ESM JavaScript on Node >= 20. The separate `site/` project builds the ADR archive with Astro.
 
 Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before changing behavior.
 
@@ -45,7 +45,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 | test/ui-lang.cjs            | Cold-start language regression against the running desktop host (delayed native locale bridge).                                            |
 | test/ui-shot.cjs            | Screenshot helper.                                                                                                                         |
 | examples/cordis.patch.yml   | Profile install example.                                                                                                                   |
-| docs/protocol.md            | Wire and file formats, HTTP surface, migration notes.                                                                                      |
+| docs/protocol.md            | Board file shapes, HTTP surface, compatibility notes.                                                                                      |
 | adr/                        | Architecture decision records maintained with adr-kit. Read relevant implemented records before changing scoped behavior.                  |
 | site/                       | Private Astro project that publishes the ADR archive to GitHub Pages. Generated atlas pages and src/data/decisions.json are not committed. |
 | .github/workflows/site.yml  | Rebuilds the atlas and deploys site/dist to GitHub Pages on pushes that touch site/, adr/, or the manifests.                               |
@@ -78,7 +78,7 @@ The registry is only a recent-project index. Each board remains the source of tr
 - track() registers the root in the global index.
 - presence is written per agent; focus is updated from the first user/subagent prompt and by team_status. Every user/subagent prompt also touches `updatedAt`, which is the activity clock.
 - The heartbeat (`heartbeatAt` + TTL) only proves the host process is alive and drops stale rows. `updatedAt`, claim timestamps, and change timestamps are the activity signals. projectSummary counts a board active when a session is working or blocked, a lease is live, or `lastActivityAt` is within `ACTIVE_WINDOW_MS` (30 minutes); the heartbeat is never used as activity.
-- write/edit goes through tools/pre-execute. A live claim owned by another agent is denied. The configured claimPolicy controls auto/advisory/require/off behavior.
+- write/edit goes through tools/pre-execute. A live claim owned by another agent is denied; there is exactly one guard policy (write/edit auto-claims, conflicts deny; ADR 22).
 - claim creates or extends the agent's active change and appends claim events to its timeline.
 - release removes the lease, appends release events, and marks the change done when no leases remain.
 - idle releases auto claims; status done releases all of that agent's claims; session disposal releases all.
@@ -120,7 +120,6 @@ Current implemented decisions cover:
 - [ADR 6](adr/implemented/6-record-conversation-identity-intent-paths-and-release-state-on-every-change.md): change records carry conversation identity, intent, paths, and release state.
 - [ADR 7](adr/implemented/7-use-short-lived-auto-leases-plus-explicit-planned-leases.md): auto leases for writes, explicit leases for planned work, idle release and TTL.
 - [ADR 8](adr/implemented/8-take-the-client-ui-language-from-the-host-locale-service.md): UI language comes from the injected locale service, not the served document.
-- [ADR 9](adr/implemented/9-default-coordination-off-behind-one-panel-switch.md): one panel switch owns the mode; its off-by-default choice is superseded by ADR 20.
 - [ADR 10](adr/implemented/10-treat-the-panel-as-an-app-shell-with-logo-rail-topbar-and-scrolling-content.md): the panel is a full-bleed app shell with a 56px topbar, independently scrolling content, and a rail (now on the right with no brand block, per ADR 17 and ADR 19).
 - [ADR 11](adr/implemented/11-list-active-projects-only-and-give-an-empty-board-one-quiet-blank-page.md): the rail lists active projects only; an empty board is one quiet blank page.
 - [ADR 12](adr/implemented/12-use-a-repo-owned-radiant-eye-mark-instead-of-a-library-icon.md): the brand mark is a repo-owned radiant eye, not a library icon.
@@ -133,6 +132,8 @@ Current implemented decisions cover:
 - [ADR 19](adr/implemented/19-strip-the-rail-to-a-bare-list-and-pin-the-toggle-to-the-panel-corner.md): the rail is one bare list, and the rail toggle is pinned to the panel corner.
 - [ADR 20](adr/implemented/20-turn-coordination-on-by-default.md): coordination is on by default; a human turns it off.
 - [ADR 21](adr/implemented/21-publish-the-decision-archive-as-a-separate-astro-site-on-github-pages.md): the ADR archive is a separate Astro site on GitHub Pages; generated atlas files are not committed.
+- [ADR 22](adr/implemented/22-keep-exactly-one-write-guard-policy-auto.md): the write guard has one policy; write/edit auto-claims and denies live conflicts.
+- [ADR 23](adr/implemented/23-drop-the-board-protocol-version.md): board files carry no protocol version; Git is the only version.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -141,7 +142,7 @@ When a choice is already shipped, use adrkit record with --raised-by and --decid
 ```sh
 npm test                                  # store + client-locale tests (test/*.test.mjs)
 node --test test/store.test.mjs           # explicit store/timeline/concurrency/CLI tests
-node test/host-smoke.mjs                  # host tools, guard, /projects, /claim, /release
+node test/host-smoke.mjs                  # host tools, guard, /projects, /state, /coordination
 node test/ui-flow.cjs                     # read-only UI + the one switch; needs the desktop host + Playwright
 node test/ui-lang.cjs                     # cold-start language regression; needs the desktop host + Playwright
 node test/ui-shot.cjs                     # write ignored screenshots/local/01-panel.png and 03-dark.png
@@ -186,7 +187,6 @@ Profile row:
       config:
         heartbeatMs: 15000
         ttlMs: 60000
-        claimPolicy: auto
         autoClaimTtlMs: 600000
         releaseAutoOnIdle: true
 ```
@@ -218,8 +218,8 @@ Reloading:
 - Turning coordination off must release this host's auto leases; explicit leases are left to their owner. The switch never flips itself: it starts on (ADR 20) and only a human turns it off.
 - A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
 - A page refresh is required after client changes; a host reload is required after lib/index.js changes.
-- Protocol changes are breaking. If a file shape or route changes incompatibly, bump PROTOCOL and update README, docs/protocol.md, tests, and the migration section.
-- Protocol 2 boards may still exist. Old messages are ignored and can be deleted. Presence/claim/change files without timelines get a fallback timeline from createdAt/releasedAt.
+- There is no protocol version: Git is the only version. When a board file shape or an HTTP route changes, update docs/protocol.md and the tests in the same change.
+- Existing boards may carry fields the board no longer writes. Unknown fields are ignored; old message directories can be deleted. Presence/claim/change files without timelines get a fallback timeline from createdAt/releasedAt.
 - The global registry is capped at 200 entries. Clean up demo roots rather than leaving fake projects in it.
 - Do not leave active claims after verification. Run node bin/dsh-god-view.mjs claims and release what you created.
 - Do not put volatile live state (current PIDs, session ids, claim counts) into README or AGENTS.md.
