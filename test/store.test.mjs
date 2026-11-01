@@ -309,6 +309,108 @@ test('taking over an expired lease records an expire event on the old change', (
   assert.equal(renewal.change.timeline.filter((event) => event.type === 'expire').length, 0);
 });
 
+test('two agents racing for the same expired lease produce exactly one owner', async () => {
+  const root = repo();
+  for (const id of ['old', 'a', 'b']) S.createAgent(root, { id, name: id.toUpperCase() });
+  S.claimPaths(root, 'old', ['lib/race.ts'], { intent: 'gone' });
+  const file = path.join(S.paths(root).claims, S.hash('lib/race.ts') + '.json');
+  const claim = JSON.parse(fs.readFileSync(file, 'utf8'));
+  claim.expiresAt = Date.now() - 1000;
+  fs.writeFileSync(file, JSON.stringify(claim));
+
+  // Two workers align on a flag file and claim the same expired lease at the
+  // same moment. The exclusive (wx) create must decide the single owner: the
+  // loser sees a conflict and keeps no open change. Before the fix both
+  // processes overwrote the lease file and each believed it had claimed.
+  const storeUrl = 'file://' + path.resolve('lib/store.js');
+  const worker = path.join(root, 'race-worker.mjs');
+  fs.writeFileSync(
+    worker,
+    [
+      "import fs from 'node:fs';",
+      `import { claimPaths } from ${JSON.stringify(storeUrl)};`,
+      'const root = process.argv[2];',
+      'const id = process.argv[3];',
+      'const flag = process.argv[4];',
+      'function exists(f) {',
+      '  try {',
+      '    fs.statSync(f);',
+      '    return true;',
+      '  } catch {',
+      '    return false;',
+      '  }',
+      '}',
+      'while (!exists(flag)) {}',
+      'const result = claimPaths(root, id, ["lib/race.ts"], { intent: "race " + id });',
+      'process.stdout.write(JSON.stringify({ id, claimed: result.claimed.length, conflicts: result.conflicts.length }));',
+      '',
+    ].join('\n'),
+  );
+  const flag = path.join(root, 'start-flag');
+  const run = (id) =>
+    new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [worker, root, id, flag], { stdio: ['ignore', 'pipe', 'inherit'] });
+      let out = '';
+      child.stdout.on('data', (data) => (out += data));
+      child.on('exit', (code) =>
+        code === 0 ? resolve(JSON.parse(out)) : reject(new Error('worker ' + id + ' exited ' + code)),
+      );
+      child.on('error', reject);
+    });
+  const pending = [run('a'), run('b')];
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  fs.writeFileSync(flag, 'go');
+  const results = await Promise.all(pending);
+
+  const finalClaim = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.ok(['a', 'b'].includes(finalClaim.agent), 'the lease has a real owner');
+  const loser = finalClaim.agent === 'a' ? 'b' : 'a';
+  const winnerResult = results.find((result) => result.id === finalClaim.agent);
+  const loserResult = results.find((result) => result.id === loser);
+  assert.equal(winnerResult.claimed, 1, 'the winner claims the lease');
+  assert.equal(loserResult.claimed, 0, 'the loser does not also claim it');
+  assert.equal(loserResult.conflicts, 1, 'the loser sees a conflict');
+  assert.equal(
+    S.listChanges(root, { agent: loser, state: 'claimed' }).length,
+    0,
+    'the loser keeps no open change with no lease pointing at it',
+  );
+  const oldChange = S.listChanges(root, { agent: 'old' })[0];
+  assert.equal(oldChange.state, 'expired', 'the previous owner still gets its closing event');
+  assert.equal(
+    oldChange.timeline.filter((event) => event.type === 'expire').length,
+    1,
+    'the expiry is recorded exactly once',
+  );
+});
+
+test('releasePaths never rewrites the closing state of an already-finished change', () => {
+  const root = repo();
+  S.createAgent(root, { id: 'a', name: 'A' });
+  S.claimPaths(root, 'a', ['r1.ts'], { intent: 'first' });
+  S.releasePaths(root, 'a', ['r1.ts'], { summary: 'released' });
+  const change = S.listChanges(root)[0];
+  assert.equal(change.state, 'done');
+  assert.equal(change.summary, 'released');
+  // A lease file that points at an already-finished change (damaged or
+  // migrated data) must not reopen or re-close the change on release.
+  const crafted = {
+    path: 'r1.ts',
+    agent: 'a',
+    agentName: 'A',
+    changeId: change.id,
+    mode: 'edit',
+    createdAt: Date.now(),
+    ttlMs: 60_000,
+    expiresAt: Date.now() + 60_000,
+  };
+  fs.writeFileSync(path.join(S.paths(root).claims, S.hash('r1.ts') + '.json'), JSON.stringify(crafted));
+  assert.doesNotThrow(() => S.releasePaths(root, 'a', ['r1.ts'], { summary: 'again' }));
+  const after = S.listChanges(root)[0];
+  assert.equal(after.state, 'done', 'the final state survives');
+  assert.equal(after.summary, 'released', 'the original closing summary survives');
+});
+
 test('a change with an expired unswept sibling lease keeps a single final state', () => {
   const root = repo();
   S.createAgent(root, { id: 'a', name: 'A' });
