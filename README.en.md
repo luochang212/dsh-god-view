@@ -109,15 +109,23 @@ Below 700px of panel width the shell stacks: the rail becomes a horizontal, scro
 
 ### 1. Install into a DSH profile
 
+The package declares `dsh.bundle`, so DSH's plugin command installs it and activates its bundle layer:
+
 ```sh
-PROFILE="$HOME/.dsh/profiles/desktop"
-mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
+dsh plugin --profile desktop add /absolute/path/to/dsh-god-view
 ```
 
-### 2. Add the plugin config
+Once it is on npm, use the package name instead:
 
-Append this to $PROFILE/cordis.patch.yml:
+```sh
+dsh plugin --profile desktop add dsh-god-view
+```
+
+In the Desktop app, install through **Settings → Plugins** instead of guessing the profile name on the command line.
+
+### 2. Configuration (optional)
+
+The bundle carries the default configuration, so there is usually nothing to change. To override it, write the same id into $PROFILE/cordis.patch.yml (the profile patch is applied after bundle layers):
 
 ```yaml
 - insert:
@@ -137,6 +145,24 @@ Leave root empty. Each agent resolves its repository from its session cwd. Setti
 Restart the DSH host, refresh the page, and open **God's Eye** (上帝视角) in the host sidebar.
 
 Every project tracked by the plugin on this DSH enters the global project index; only the active ones appear in the project rail. A project never opened with the plugin is not discovered automatically.
+
+### Hot reload during development (optional)
+
+To edit code and see client changes on refresh, install through a symlink and add the patch row by hand; this path skips the bundle layer and still needs a host restart after `lib/index.js` changes:
+
+```sh
+PROFILE="$HOME/.dsh/profiles/desktop"
+mkdir -p "$PROFILE/node_modules"
+ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
+```
+
+```yaml
+- insert:
+    - id: dsh-god-view
+      name: dsh-god-view
+```
+
+Do not add this row when the bundle is already installed.
 
 ## 🧰 Tools and CLI
 

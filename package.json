@@ -8,12 +8,18 @@
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
     "./store": "./lib/store.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
   "bin": {
     "dsh-god-view": "./bin/dsh-god-view.mjs"
   },
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web",
       "inject": [
@@ -28,6 +34,9 @@
     "bin/",
     "docs/",
     "adr/",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
     "README.md",
     "README.en.md",
     "LICENSE",
@@ -47,6 +56,14 @@
     "site:dev": "npm --prefix site run dev",
     "site:build": "npm --prefix site run build"
   },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "multi-agent",
+    "coordination",
+    "file-lease"
+  ],
+  "icon": "./icon.svg",
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5"

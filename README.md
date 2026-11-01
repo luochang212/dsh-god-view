@@ -109,15 +109,23 @@ claim 是精确到文件路径的，不支持目录或 glob。
 
 ### 1. 安装到 DSH profile
 
+包已经声明 `dsh.bundle`，用 DSH 的插件命令安装会同时写入 bundle 层：
+
 ```sh
-PROFILE="$HOME/.dsh/profiles/desktop"
-mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
+dsh plugin --profile desktop add /absolute/path/to/dsh-god-view
 ```
 
-### 2. 添加插件配置
+发布到 npm 后可以改用包名：
 
-在 $PROFILE/cordis.patch.yml 中加入：
+```sh
+dsh plugin --profile desktop add dsh-god-view
+```
+
+Desktop 应用请在 **Settings → Plugins** 里安装，不要用命令行猜 profile 名。
+
+### 2. 配置（可选）
+
+bundle 自带默认配置，通常不用改。要覆盖时，在 $PROFILE/cordis.patch.yml 里写同一个 id（profile patch 在 bundle 层之后应用）：
 
 ```yaml
 - insert:
@@ -137,6 +145,24 @@ root 留空即可。每个 Agent 会按自己的 session cwd 找到对应仓库�
 重启 DSH host，刷新页面，点击左侧边栏的 **上帝视角 / God's Eye**。
 
 被插件跟踪过的项目会进入全局项目索引，其中活跃的才出现在右侧项目栏；没有用插件打开过的项目不会自动出现。
+
+### 开发时热更新（可选）
+
+直接改代码、刷新页面就能看到 client 变化时，可以改用 symlink 安装并手写 patch 行；这条路径不经过 bundle 层，改完 `lib/index.js` 仍需重启 host：
+
+```sh
+PROFILE="$HOME/.dsh/profiles/desktop"
+mkdir -p "$PROFILE/node_modules"
+ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
+```
+
+```yaml
+- insert:
+    - id: dsh-god-view
+      name: dsh-god-view
+```
+
+如果已经用 bundle 安装，不要再加这条手写行。
 
 ## 🧰 工具与 CLI
 

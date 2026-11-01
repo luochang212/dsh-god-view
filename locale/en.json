@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "God's Eye",
+    "description": "A read-only coordination board for parallel agents: presence, file leases, and a claim/release Gantt."
+  }
+}
