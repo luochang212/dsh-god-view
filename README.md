@@ -8,7 +8,7 @@
 **dsh-god-view** · 多 Agent 协作看板 / DSH plugin
 
 <p>
-  <img src="https://img.shields.io/badge/version-0.3.0-0e7490?style=flat-square" alt="version" />
+  <img src="https://img.shields.io/badge/version-0.1.0-0e7490?style=flat-square" alt="version" />
   <img src="https://img.shields.io/badge/DSH-plugin-0e7490?style=flat-square" alt="DSH plugin" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-0e7490?style=flat-square" alt="node" />
   <img src="https://img.shields.io/badge/license-MIT-0e7490?style=flat-square" alt="license" />

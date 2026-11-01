@@ -1,6 +1,6 @@
 {
   "name": "dsh-god-view",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "description": "Give your agents a god's eye view: file leases, claim and release records, and a Gantt of who holds what, so parallel agents stop overwriting each other. A DSH plugin, on by default, one switch turns it off.",
   "type": "module",
   "main": "lib/index.js",

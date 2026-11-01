@@ -10,7 +10,7 @@ It has exactly three jobs:
 2. Lease files so two agents do not edit the same path at the same time.
 3. Show a claim/release timeline (who held which file, from when, until when).
 
-Version: 0.3.0. The plugin has no build step; runtime is plain ESM JavaScript on Node >= 20. The separate `site/` project builds the ADR archive with Astro.
+Version: 0.1.0. The plugin has no build step; runtime is plain ESM JavaScript on Node >= 20. The separate `site/` project builds the ADR archive with Astro.
 
 Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before changing behavior.
 
