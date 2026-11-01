@@ -91,7 +91,9 @@ assert.equal(S.readCoordination(registry).enabled, true, 'coordination is on by 
 S.writeCoordination(registry, false);
 
 // Switched off: the host keeps sessions in memory, writes nothing, blocks nothing.
-emit('agent/created', { agent: alice });
+// 'agent/status' running is a real track attempt (there is no 'agent/created'
+// listener), so these assertions exercise the dormant path, not a no-op emit.
+emit('agent/status', { agent: alice, status: 'running' });
 assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writes no board');
 const pre = handlers.get('tools/pre-execute')[0];
 assert.ok(pre, 'pre-execute guard registered');
@@ -106,8 +108,8 @@ assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writ
 
 // Turn coordination on; every later assertion exercises the enabled path.
 S.writeCoordination(registry, true);
-emit('agent/created', { agent: alice });
-emit('agent/created', { agent: bob });
+emit('agent/status', { agent: alice, status: 'running' });
+emit('agent/status', { agent: bob, status: 'running' });
 
 const status = tools.get('team_status');
 const roster = tools.get('team_roster');
@@ -163,7 +165,7 @@ assert.equal(S.getClaim(repo, 'src/auto.ts').agent, bobId);
 S.releasePaths(repo, bobId, ['src/auto.ts']);
 
 const carol = makeAgent('session-carol-999999');
-emit('agent/created', { agent: carol });
+emit('agent/status', { agent: carol, status: 'running' });
 emit('agent/inbox/inserted', {
   agent: carol,
   message: {
