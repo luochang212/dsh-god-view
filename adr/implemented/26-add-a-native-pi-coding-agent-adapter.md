@@ -6,7 +6,7 @@ description: Add a native Pi coding-agent adapter over the generic godview board
 raised-by: agent
 decided-by: human
 created: 2026-11-02
-commit: 9f1f09d
+commit: 1c65718
 paths:
   - package.json
   - packages/pi-god-view/package.json
