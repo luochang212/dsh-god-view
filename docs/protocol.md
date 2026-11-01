@@ -132,9 +132,10 @@ Coordination is on by default. The switch is a single global file in the registr
 { "enabled": true, "updatedAt": 1793280396000, "updatedAtIso": "2026-10-30T07:26:36.000Z" }
 ```
 
-- **On (default, or file missing/unreadable):** presence, leases, the guard, the timeline, and the prompt context apply as documented below.
-- **Off (`enabled: false`):** the host writes no board state. It creates no `.dsh/parallel`, no presence, no leases, no changes, and no prompt context. The write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
-- Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire. Turning it back on backfills presence for tracked sessions.
+- **On (default, or file missing/unreadable):** presence, leases, the guard, the timeline, the prompt context, and the three `team_*` tools apply as documented below.
+- **Off (`enabled: false`):** the host writes no board state. It creates no `.dsh/parallel`, no presence, no leases, no changes, and no prompt context, and it disposes the three `team_*` tools, so the model's catalog carries no team tool schema. The write guard allows everything. A call admitted before the flip (a stale tool reference) still returns the off notice instead of an unknown-tool error. Only in-memory session tracking, the project registry, and the panel entry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
+- Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire. Turning it back on backfills presence for tracked sessions and re-registers the tools.
+- A host notices a flip made by another process (or by another machine sharing the registry) on its next coordination check: its heartbeat, a write/edit, a team tool call, or `GET /coordination`. The tool catalog follows within one heartbeat, and the panel POST is immediate.
 - The switch never flips itself. A host that sees several sessions while off keeps that count internally and does not warn in the panel (ADR 18).
 - The switch governs the DSH host. The CLI writes the same board files directly and does not consult the switch, so a claim made through the CLI is visible to every host even while the switch is off.
 

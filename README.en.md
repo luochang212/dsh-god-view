@@ -28,7 +28,7 @@ It is not a chat tool and not a human control panel. It is a read-only coordinat
 
 Coordination exists so parallel agents do not step on each other, so it is **on by default**: writes register leases and a file held by someone else is rejected.
 
-When you do not need it, turn the coordination switch off in the panel header. While it is off the plugin does nothing: no board directory, no presence rows, no file leases, no write guard, and no prompt context. A single agent edits at full speed with no overhead.
+When you do not need it, turn the coordination switch off in the panel header. While it is off the plugin stays out of the agent's way: no board directory, no presence rows, no file leases, no write guard, no prompt context, and no `team_*` tools in the model's catalog. The panel entry, the switch route, and the global project index stay (the switch needs a home); apart from those, a single agent sees no effect.
 
 - Turning it off releases the automatic leases this host holds and freezes the history instead of deleting it.
 - Turning it back on does not back-claim files already being edited; protection starts at the next write.
@@ -140,7 +140,7 @@ Every project tracked by the plugin on this DSH enters the global project index;
 
 ## 🧰 Tools and CLI
 
-The runtime exposes exactly three tools:
+While coordination is on, the model's catalog carries exactly these three tools (the switch takes them all out):
 
 | Tool            | Purpose                                                                          |
 | --------------- | -------------------------------------------------------------------------------- |

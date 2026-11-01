@@ -16,7 +16,7 @@ Read README.md (Chinese) or README.en.md (English) and docs/protocol.md before c
 
 ## Non-negotiable product shape
 
-- Coordination is on by default and only a human changes it. With the switch off the plugin is dormant: no board directory, no presence, no leases, no history, no prompt context, and no write guard. One switch in the panel header turns it off and on. See [ADR 20](adr/implemented/20-turn-coordination-on-by-default.md); it supersedes ADR 9's default.
+- Coordination is on by default and only a human changes it. With the switch off the plugin is dormant: no board directory, no presence, no leases, no history, no prompt context, no write guard, and no `team_*` tools in the model's catalog. One switch in the panel header turns it off and on. See [ADR 20](adr/implemented/20-turn-coordination-on-by-default.md); it supersedes ADR 9's default.
 - The panel is read-only apart from that one switch. There is no data input and no refresh button; the panel polls by itself. Project rows are navigation buttons. Do not add a composer, message box, reply box, question queue, or human input.
 - There are no messages. There is no team_send, inbox, needsReply, read state, reply_to, message TTL, or "Agent questions" section. Do not reintroduce them without an explicit request.
 - Focus is a property of the current session at the current time. It is not a message and has no lifecycle.
@@ -73,7 +73,7 @@ The registry is only a recent-project index. Each board remains the source of tr
 
 ### Runtime flow
 
-- The host reads the coordination switch from the registry dir before anything writes. When it is off the host only tracks sessions in memory and refreshes the project index; it never creates a board, a presence row, a lease, or a change.
+- The host reads the coordination switch from the registry dir before anything writes. When it is off the host only tracks sessions in memory, refreshes the project index, and registers no team tools; it never creates a board, a presence row, a lease, or a change.
 - The host resolves a board root from each agent's session cwd. config.root is optional and empty by default; if set, it forces one repository for compatibility.
 - track() registers the root in the global index.
 - presence is written per agent; focus is updated from the first user/subagent prompt and by team_status. Every user/subagent prompt also touches `updatedAt`, which is the activity clock.
@@ -134,6 +134,7 @@ Current implemented decisions cover:
 - [ADR 21](adr/implemented/21-publish-the-decision-archive-as-a-separate-astro-site-on-github-pages.md): the ADR archive is a separate Astro site on GitHub Pages; generated atlas files are not committed.
 - [ADR 22](adr/implemented/22-keep-exactly-one-write-guard-policy-auto.md): the write guard has one policy; write/edit auto-claims and denies live conflicts.
 - [ADR 23](adr/implemented/23-drop-the-board-protocol-version.md): board files carry no protocol version; Git is the only version.
+- [ADR 24](adr/implemented/24-register-the-team-tools-only-while-coordination-is-on.md): the three team tools exist only while coordination is on; a dormant host registers none.
 
 When a choice is already shipped, use adrkit record with --raised-by and --decided-by. When it is not shipped, use adrkit propose, then adrkit implement after it ships. Do not edit a numbered record to change its choice; supersede or archive it with a new record. Run adrkit validate --all before finishing.
 
@@ -216,7 +217,7 @@ Reloading:
 - The rail lists only boards with a working/blocked session, a live lease, or activity within 30 minutes; a heartbeat alone is not a reason to list a board. When the selected board goes idle, selection moves to the first active board; with none, the blank page renders and the content has zero sections. Do not add a filter control, a second list, or a placeholder box to bring idle boards back.
 - The panel has exactly two controls, both chrome: the coordination switch (mode) and the rail toggle (layout). The UI test asserts one switch, one toggle, and zero inputs/selects/textareas. Never put a control inside the rail: collapsing it must not hide a decision.
 - Turning coordination off must release this host's auto leases; explicit leases are left to their owner. The switch never flips itself: it starts on (ADR 20) and only a human turns it off.
-- A dormant host must leave no board behind. If a change makes the plugin write to .dsh/parallel while the switch is off, that is a bug.
+- A dormant host must leave no board behind and no team tool in the catalog. If a change makes the plugin write to .dsh/parallel or register `team_*` while the switch is off, that is a bug. Tool registration follows the switch through `syncTools()`; a stale call after the flip still returns the off notice.
 - A page refresh is required after client changes; a host reload is required after lib/index.js changes.
 - There is no protocol version: Git is the only version. When a board file shape or an HTTP route changes, update docs/protocol.md and the tests in the same change.
 - Existing boards may carry fields the board no longer writes. Unknown fields are ignored; old message directories can be deleted. Presence/claim/change files without timelines get a fallback timeline from createdAt/releasedAt.
