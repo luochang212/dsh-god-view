@@ -1,3 +1,5 @@
+.agents/
+.DS_Store
 .dsh/parallel/
 node_modules/
 *.log
