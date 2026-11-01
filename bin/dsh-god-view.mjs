@@ -139,7 +139,7 @@ function commandHelp() {
       '  dsh-god-view claim  --id ID --paths FILE [--paths FILE2] [--mode edit|review] [--reason TEXT]',
       '  dsh-god-view release --id ID --paths FILE [--force]',
       '  dsh-god-view claims [--json]',
-      '  dsh-god-view changes [--json]',
+      '  dsh-god-view changes [--json] [--limit N]',
       '',
       'Global: --repo DIR (defaults cwd) or DSH_PARALLEL_REPO. Agent id: --id or DSH_PARALLEL_AGENT_ID.',
       'Presence is a one-line focus. Claims are leases; changes keep a claim/release timeline.',
@@ -305,7 +305,8 @@ async function main() {
       break;
     }
     case 'changes': {
-      const all = listChanges(root, { limit: 50 });
+      const limit = Math.max(1, Math.min(200, Number(opts.limit) || 50));
+      const all = listChanges(root, { limit });
       if (opts.json) {
         console.log(JSON.stringify(all, null, 2));
         break;
