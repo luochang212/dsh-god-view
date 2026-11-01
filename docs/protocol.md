@@ -34,7 +34,7 @@ A board is always repository-local. The index only lists roots; it never merges 
   "status": "active | idle | blocked | done",
   "focus": "one line about the current work",
   "lastAction": "edit lib/store.js",
-  "plan": null,
+  "plan": "",
   "files": [],
   "branch": null,
   "pid": 12345,
@@ -136,6 +136,7 @@ Coordination is on by default. The switch is a single global file in the registr
 - **Off (`enabled: false`):** the host writes no board state. It creates no `.dsh/parallel`, no presence, no leases, no changes, and no prompt context. The write guard allows everything. Only in-memory session tracking and the project registry continue, so the panel can still discover repositories and offer the switch; the rail itself lists only boards with a working/blocked session, a live lease, or activity within 30 minutes (ADR 11 and ADR 16).
 - Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire. Turning it back on backfills presence for tracked sessions.
 - The switch never flips itself. A host that sees several sessions while off keeps that count internally and does not warn in the panel (ADR 18).
+- The switch governs the DSH host. The CLI writes the same board files directly and does not consult the switch, so a claim made through the CLI is visible to every host even while the switch is off.
 
 ## Write guard
 
@@ -147,6 +148,8 @@ Step 0: the guard only runs while the coordination switch is on.
 4. release auto leases on idle; release all leases when the session is disposed.
 
 There is one guard policy. Writes and edits are auto-claimed and live conflicts are denied; the panel and the agents' prompt context always show the current leases. Shell edits are outside the guard.
+
+The guard fails open: if recording the lease itself fails (for example the board directory cannot be written), the write is allowed and the host logs a warning. Coordination never blocks work because its own bookkeeping broke.
 
 ## Project registry
 
@@ -189,7 +192,7 @@ GET /projects reads the union of the host's known roots and this index, then com
 
 /state also returns `coordination: { enabled, trackedSessions, roots }`. A POST body must be sent as `application/json`; any other content type is rejected before parsing.
 
-The panel never mutates a board. Its only write is POST /coordination, which flips the global switch in the registry directory. Reads serve the panel; there are no board-writing HTTP routes — the host writes through the store directly and the CLI uses the same files. Cross-origin requests are denied.
+The panel itself sends no board writes: reads serve the panel, and POST /coordination is the only write route. Serving a board through /state registers its root with the host, whose background heartbeat sweep may then clear that board's expired leases and close their changes — the same maintenance it runs for boards it tracks. The host writes through the store directly and the CLI uses the same files. Cross-origin requests are denied.
 
 ## Compatibility
 

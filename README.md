@@ -241,6 +241,7 @@ UI 测试需要先启动桌面 DSH、Playwright，以及本机登录 cookie。�
 - 项目列表来自 host 跟踪过的 root + 全局注册表；从未打开过的项目不会出现。
 - claim 是精确路径，不覆盖目录和 glob。
 - auto claim idle 时释放；explicit claim 必须 release 或等 TTL。
+- CLI 是独立的写入方，直接操作同一套 board 文件，不受协作开关约束。
 - 一个 Agent 同一时间只有一条 active change；开新任务前先 release 旧的。
 - Gantt 展示的是 claim/release 时间，不是 git diff / commit 级证明。
 - 不同 git worktree 是不同 board。

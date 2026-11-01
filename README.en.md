@@ -241,6 +241,7 @@ Refresh the page after client changes; restart the host after host changes. Deve
 - The project list comes from roots tracked by the host plus the global registry; a never-opened project does not appear.
 - Claims are exact paths, not directories or globs.
 - Auto claims release on idle; explicit claims need release or TTL expiry.
+- The CLI writes boards directly and is not governed by the coordination switch.
 - One active change per agent; release the old change before starting a new one.
 - The Gantt shows claim/release time, not git-diff or commit-level proof.
 - Different git worktrees are different boards.
