@@ -88,17 +88,22 @@ const bobId = S.agentIdForSession('session-bob-654321');
 // Default is on. A human turns it off from the panel switch; the off path below
 // is exercised explicitly so it keeps its assertions.
 assert.equal(S.readCoordination(registry).enabled, true, 'coordination is on by default');
+assert.equal(tools.size, 3, 'a host that starts coordinated registers the team tools');
+const liveStatusTool = tools.get('team_status');
 S.writeCoordination(registry, false);
 
-// Switched off: the host keeps sessions in memory, writes nothing, blocks nothing.
+// Switched off: the host keeps sessions in memory, writes nothing, blocks nothing,
+// and removes the team tools from the model's catalog.
 // 'agent/status' running is a real track attempt (there is no 'agent/created'
 // listener), so these assertions exercise the dormant path, not a no-op emit.
 emit('agent/status', { agent: alice, status: 'running' });
 assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writes no board');
+assert.equal(tools.size, 0, 'a dormant host registers no team tools');
+// A call admitted before the switch flipped still gets the off notice.
+let offOut = await liveStatusTool.execute({ focus: 'dormant' }, { agent: alice });
+assert.match(offOut.text, /Coordination is off/);
 const pre = handlers.get('tools/pre-execute')[0];
 assert.ok(pre, 'pre-execute guard registered');
-let offOut = await tools.get('team_status').execute({ focus: 'dormant' }, { agent: alice });
-assert.match(offOut.text, /Coordination is off/);
 const offDecision = await pre({ name: 'write', agent: alice, arguments: { file_path: 'src/off.ts' } }, async () => ({
   kind: 'allow',
 }));
@@ -106,8 +111,13 @@ assert.equal(offDecision.kind, 'allow', 'a dormant host does not block writes');
 assert.equal(S.getClaim(repo, 'src/off.ts'), undefined, 'a dormant host records no lease');
 assert.equal(fs.existsSync(path.join(repo, '.dsh')), false, 'a dormant host writes no board while working');
 
-// Turn coordination on; every later assertion exercises the enabled path.
+// Turn coordination on; the next coordination check re-registers the tools.
 S.writeCoordination(registry, true);
+emit('agent/inbox/inserted', {
+  agent: alice,
+  message: { source: { kind: 'user' }, content: [{ type: 'text', text: 'back on' }] },
+});
+assert.equal(tools.size, 3, 'turning coordination on restores the team tools');
 emit('agent/status', { agent: alice, status: 'running' });
 emit('agent/status', { agent: bob, status: 'running' });
 
@@ -242,6 +252,7 @@ assert.equal(response.status, 200);
 coordination = await response.json();
 assert.equal(coordination.enabled, false);
 assert.equal((await (await fetch(base + '/coordination')).json()).enabled, false);
+assert.equal(tools.size, 0, 'the panel switch removes the team tools');
 decision = await pre({ name: 'write', agent: bob, arguments: { file_path: 'src/while-off.ts' } }, async () => allow);
 assert.equal(decision.kind, 'allow', 'switching off stops blocking writes');
 assert.equal(S.getClaim(repo, 'src/while-off.ts'), undefined, 'switching off records no lease');
@@ -254,6 +265,7 @@ response = await fetch(base + '/coordination', {
   body: JSON.stringify({ enabled: true }),
 });
 assert.equal((await response.json()).enabled, true);
+assert.equal(tools.size, 3, 'the panel switch restores the team tools');
 
 const cross = await fetch(base + '/state', { headers: { origin: 'http://evil.example' } });
 assert.equal(cross.status, 403);
@@ -271,4 +283,39 @@ const doneChange = S.listChanges(repo, { state: 'done' }).find((change) => chang
 assert.ok(doneChange, 'the release records the status-done summary');
 
 await new Promise((resolve) => server.close(resolve));
+
+// A host that boots while the switch is off starts with an empty tool catalog,
+// so a restart never leaks the tools back into a dormant profile.
+const offRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-host-off-'));
+fs.mkdirSync(path.join(offRepo, '.git'));
+fs.writeFileSync(path.join(offRepo, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+const offRegistry = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-reg-off-'));
+S.writeCoordination(offRegistry, false);
+const offTools = new Map();
+const offCtx = {
+  tools: {
+    register(definition) {
+      offTools.set(definition.name, definition);
+      return () => offTools.delete(definition.name);
+    },
+  },
+  effect(fn) {
+    return fn();
+  },
+  on() {
+    return () => {};
+  },
+  get() {
+    return undefined;
+  },
+  inject(deps, callback) {
+    callback(offCtx);
+  },
+};
+apply(offCtx, { root: offRepo, registryDir: offRegistry, heartbeatMs: 60_000 });
+assert.equal(offTools.size, 0, 'a host that boots dormant registers no tools');
+assert.equal(fs.existsSync(path.join(offRepo, '.dsh')), false, 'a host that boots dormant writes no board');
+fs.rmSync(offRepo, { recursive: true, force: true });
+fs.rmSync(offRegistry, { recursive: true, force: true });
+
 console.log('host smoke ok', repo, S.listAgents(repo).length, tools.size);
