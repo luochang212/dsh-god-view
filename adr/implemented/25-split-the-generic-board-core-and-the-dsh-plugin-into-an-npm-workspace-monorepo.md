@@ -6,7 +6,7 @@ description: Split the board into a generic godview core and a DSH adapter,
 raised-by: agent
 decided-by: human
 created: 2026-11-02
-commit: 83f91f0
+commit: f0a7253
 paths:
   - package.json
   - packages/godview/package.json
