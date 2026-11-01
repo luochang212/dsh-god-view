@@ -24,6 +24,8 @@
 - 哪个文件正被谁占用（file lease）；
 - 什么时候占用、什么时候释放、被谁占用（claim/release timeline）。
 
+仓库是 npm workspaces：`packages/godview` 是通用核心（store、CLI、协议），`packages/dsh-god-view` 是 DSH 适配层（host、client、bundle）。
+
 ## 🔌 默认开启，随时可以关掉
 
 协作的价值是让并行的 Agent 不互相踩踏，所以它**默认是开的**：写入会自动登记占用，别人占着同一个文件时会被拒绝。
@@ -112,14 +114,10 @@ claim 是精确到文件路径的，不支持目录或 glob。
 包已经声明 `dsh.bundle`，用 DSH 的插件命令安装会同时写入 bundle 层：
 
 ```sh
-dsh plugin --profile desktop add /absolute/path/to/dsh-god-view
-```
-
-发布到 npm 后可以改用包名：
-
-```sh
 dsh plugin --profile desktop add dsh-god-view
 ```
+
+本地源码开发不要用 `add /path/to/packages/dsh-god-view`：适配层依赖 registry 上的 `godview`。用下面的 symlink 方式，或先发布 `godview`。
 
 Desktop 应用请在 **Settings → Plugins** 里安装，不要用命令行猜 profile 名。
 
@@ -148,12 +146,12 @@ root 留空即可。每个 Agent 会按自己的 session cwd 找到对应仓库�
 
 ### 开发时热更新（可选）
 
-直接改代码、刷新页面就能看到 client 变化时，可以改用 symlink 安装并手写 patch 行；这条路径不经过 bundle 层，改完 `lib/index.js` 仍需重启 host：
+直接改代码、刷新页面就能看到 client 变化时，可以改用 symlink 安装并手写 patch 行；这条路径不经过 bundle 层，改完 `packages/dsh-god-view/lib/index.js` 仍需重启 host。先在仓库根目录跑 `npm install`，让 workspace 把 `godview` 链接到根 `node_modules`：
 
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
+ln -sfn /absolute/path/to/dsh-god-view/packages/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
 ```
 
 ```yaml
@@ -174,18 +172,21 @@ ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
 | **team_roster** | 读取当前仓库的活跃 Agent、claim、进行中/最近 change                |
 | **team_claim**  | claim / release / list；reason 是 change intent 或 release summary |
 
-CLI 与插件共用同一套文件：
+CLI 由核心包 `godview` 提供。安装适配层会带上运行时依赖；需要命令时单独安装：
 
 ```sh
-node bin/dsh-god-view.mjs join    --name reviewer --focus "reviewing the guard"
-node bin/dsh-god-view.mjs status  --id <id> --focus "reading the claim timeline"
-node bin/dsh-god-view.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
-node bin/dsh-god-view.mjs release --id <id> --paths lib/store.js --summary "done"
-node bin/dsh-god-view.mjs claims
-node bin/dsh-god-view.mjs changes
-node bin/dsh-god-view.mjs list
-node bin/dsh-god-view.mjs leave --id <id>
+npm install -g godview
+godview join    --name reviewer --focus "reviewing the guard"
+godview status  --id <id> --focus "reading the claim timeline"
+godview claim   --id <id> --paths packages/godview/lib/store.js --intent "timeline fix"
+godview release --id <id> --paths packages/godview/lib/store.js --summary "done"
+godview claims
+godview changes
+godview list
+godview leave --id <id>
 ```
+
+仓库内不安装全局命令时，用 `node packages/godview/bin/godview.mjs` 替换 `godview`。
 
 ## 📦 数据布局
 
@@ -212,6 +213,7 @@ node bin/dsh-god-view.mjs leave --id <id>
 关键取舍用 [adr-kit](https://github.com/luochang212/adr-kit) 记录在 [adr/](adr/README.md)。记录会继续增加，所以这里只留决定产品形状的几条；完整清单和每条的理由用 `adrkit list` 查看。
 
 - 每个仓库一块 board，全局索引只做发现和汇总，不合并 claim，也不加跨项目锁（ADR 1）。
+- 发布拆成 `godview`（通用 store/CLI）和 `dsh-god-view`（DSH 适配层）两个 npm 包，放在同一个 workspace；两条版本线由 changesets 固定同步（ADR 25）。
 - 没有消息、收件箱或待回复；focus 是会话属性，面板除了协作开关只读（ADR 2、5）。
 - 占用是 claim/release 时间轴，按文件渲染成甘特图；甘特图是唯一的时间轴界面（ADR 3、14）。
 - 协作默认开启，由人从顶栏关掉；关闭时不写任何 board 状态（ADR 20，取代 ADR 9 的默认值）。
@@ -251,9 +253,9 @@ write/edit 自动 claim，与他人的活跃 claim 冲突时拒绝写入；面�
 无需构建，浏览器端由 DSH 的 module loader 直接加载。
 
 ```sh
-npm test                          # store + client-locale suites
-node test/host-smoke.mjs          # tools / write guard / /projects / /state / /coordination
-node test/ui-flow.cjs             # read-only UI + the coordination switch
+npm test                                   # both workspace suites
+npm run host:smoke                         # tools / write guard / /projects / /state / /coordination
+node packages/dsh-god-view/test/ui-flow.cjs # read-only UI + the coordination switch
 ```
 
 UI 测试需要先启动桌面 DSH、Playwright，以及本机登录 cookie。测试断言：没有输入控件、恰好一个协作开关、右侧项目栏至少一行、选中的项目有甘特图、没有 console error；HAS_SESSION 之类的字段只是打印出来的探针。

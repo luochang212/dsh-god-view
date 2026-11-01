@@ -5,7 +5,7 @@ description: Read before adding tabs, dashboard cards, activity feeds, setup scr
 raised-by: human
 decided-by: human
 created: 2026-10-30
-paths: [lib/client.js, lib/index.js]
+paths: [packages/dsh-god-view/lib/client.js, packages/dsh-god-view/lib/index.js]
 ---
 
 # ADR: 5 Keep the board to one read-only screen and three concepts

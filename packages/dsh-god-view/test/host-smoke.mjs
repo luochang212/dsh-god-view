@@ -4,7 +4,7 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import { apply } from '../lib/index.js';
-import * as S from '../lib/store.js';
+import * as S from 'godview';
 
 const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-host-'));
 fs.mkdirSync(path.join(repo, '.git'));
@@ -211,7 +211,7 @@ assert.equal(snapshot.root, repo);
 assert.equal(snapshot.stats.agents, 3);
 assert.equal('protocol' in snapshot, false, 'the snapshot carries no protocol version');
 assert.equal('messages' in snapshot, false);
-assert.equal(path.basename(snapshot.cliPath), 'dsh-god-view.mjs', 'the advertised CLI is the renamed binary');
+assert.equal(path.basename(snapshot.cliPath), 'godview.mjs', 'the advertised CLI is the core binary');
 assert.ok(fs.existsSync(snapshot.cliPath), 'the CLI path the host advertises exists on disk');
 
 // The board-writing routes are gone; reads and the switch are the whole HTTP surface.

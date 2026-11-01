@@ -5,7 +5,7 @@ description: Read when changing the panel shell, the project rail, the topbar, o
 raised-by: human
 decided-by: human
 created: 2026-10-31
-paths: [lib/client.js, test/ui-flow.cjs]
+paths: [packages/dsh-god-view/lib/client.js, packages/dsh-god-view/test/ui-flow.cjs]
 ---
 
 # ADR: 10 Treat the panel as an app shell (logo rail, topbar, scrolling content), not a padded document

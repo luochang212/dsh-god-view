@@ -24,6 +24,8 @@ It is not a chat tool and not a human control panel. It is a read-only coordinat
 - which file is currently held, and by whom (a file lease);
 - when it was claimed, when it was released, and by whom (a claim/release timeline).
 
+The repository is an npm workspace: `packages/godview` is the generic core (store, CLI, protocol); `packages/dsh-god-view` is the DSH adapter (host, client, bundle).
+
 ## 🔌 On by default, off whenever you want
 
 Coordination exists so parallel agents do not step on each other, so it is **on by default**: writes register leases and a file held by someone else is rejected.
@@ -112,14 +114,10 @@ Below 700px of panel width the shell stacks: the rail becomes a horizontal, scro
 The package declares `dsh.bundle`, so DSH's plugin command installs it and activates its bundle layer:
 
 ```sh
-dsh plugin --profile desktop add /absolute/path/to/dsh-god-view
-```
-
-Once it is on npm, use the package name instead:
-
-```sh
 dsh plugin --profile desktop add dsh-god-view
 ```
+
+For local source development, do not use `add /path/to/packages/dsh-god-view`: the adapter depends on the registry version of `godview`. Use the symlink path below, or publish `godview` first.
 
 In the Desktop app, install through **Settings → Plugins** instead of guessing the profile name on the command line.
 
@@ -148,12 +146,12 @@ Every project tracked by the plugin on this DSH enters the global project index;
 
 ### Hot reload during development (optional)
 
-To edit code and see client changes on refresh, install through a symlink and add the patch row by hand; this path skips the bundle layer and still needs a host restart after `lib/index.js` changes:
+To edit code and see client changes on refresh, install through a symlink and add the patch row by hand; this path skips the bundle layer and still needs a host restart after `packages/dsh-god-view/lib/index.js` changes. Run `npm install` at the repository root first so the workspace links `godview` into the root `node_modules`:
 
 ```sh
 PROFILE="$HOME/.dsh/profiles/desktop"
 mkdir -p "$PROFILE/node_modules"
-ln -sfn /absolute/path/to/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
+ln -sfn /absolute/path/to/dsh-god-view/packages/dsh-god-view "$PROFILE/node_modules/dsh-god-view"
 ```
 
 ```yaml
@@ -174,18 +172,21 @@ While coordination is on, the model's catalog carries exactly these three tools 
 | **team_roster** | Read active agents, claims, and active/recent changes for the current repository |
 | **team_claim**  | Claim, release, or list paths; reason is the change intent or release summary    |
 
-The CLI shares the same files:
+The CLI is provided by the `godview` core. Installing the adapter brings the runtime dependency; install the command separately when needed:
 
 ```sh
-node bin/dsh-god-view.mjs join    --name reviewer --focus "reviewing the guard"
-node bin/dsh-god-view.mjs status  --id <id> --focus "reading the claim timeline"
-node bin/dsh-god-view.mjs claim   --id <id> --paths lib/store.js --intent "timeline fix"
-node bin/dsh-god-view.mjs release --id <id> --paths lib/store.js --summary "done"
-node bin/dsh-god-view.mjs claims
-node bin/dsh-god-view.mjs changes
-node bin/dsh-god-view.mjs list
-node bin/dsh-god-view.mjs leave --id <id>
+npm install -g godview
+godview join    --name reviewer --focus "reviewing the guard"
+godview status  --id <id> --focus "reading the claim timeline"
+godview claim   --id <id> --paths packages/godview/lib/store.js --intent "timeline fix"
+godview release --id <id> --paths packages/godview/lib/store.js --summary "done"
+godview claims
+godview changes
+godview list
+godview leave --id <id>
 ```
+
+Without a global command, replace `godview` with `node packages/godview/bin/godview.mjs`.
 
 ## 📦 Data layout
 
@@ -212,6 +213,7 @@ It stores root / name / lastSeenAt only. Presence, claims, and timelines always 
 Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). Records keep accruing, so this section keeps only the choices that shape the product; run `adrkit list` for the full set and each record's reasoning.
 
 - one board per repository; the global index only discovers and summarizes, never merges claims, and adds no cross-project lock (ADR 1).
+- the release is split into `godview` (generic store/CLI) and `dsh-god-view` (DSH adapter) in one npm workspace; changesets keeps the two versions in a fixed group (ADR 25).
 - no messages, inbox, or reply state; focus is a session property, and the panel is read-only apart from the coordination switch (ADR 2, 5).
 - occupancy is a claim/release timeline rendered as a per-file Gantt; the Gantt is the only timeline surface (ADR 3, 14).
 - coordination is on by default and a human turns it off from the topbar; off writes no board state (ADR 20, which supersedes ADR 9's default).
@@ -251,9 +253,9 @@ Writes and edits are auto-claimed; a live claim by another agent denies the writ
 There is no build step. The browser bundle is loaded directly by the DSH module loader.
 
 ```sh
-npm test                          # store + client-locale suites
-node test/host-smoke.mjs          # tools / write guard / /projects / /state / /coordination
-node test/ui-flow.cjs             # read-only UI + the coordination switch
+npm test                                   # both workspace suites
+npm run host:smoke                         # tools / write guard / /projects / /state / /coordination
+node packages/dsh-god-view/test/ui-flow.cjs # read-only UI + the coordination switch
 ```
 
 The UI test requires the desktop DSH host, Playwright, and the local desktop auth cookie. It asserts zero inputs, exactly one coordination switch, at least one active project row, a Gantt for the selected project, and no console errors; fields such as HAS_SESSION are printed probes, not assertions.

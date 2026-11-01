@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * dsh-god-view: dependency-free CLI for the repo-local parallel-agent board.
+ * godview: dependency-free CLI for the repo-local parallel-agent board.
  *
  * The CLI and the DSH plugin use the same files: presence, claims, changes,
  * and the claim/release timeline.
@@ -129,17 +129,17 @@ function printAgents(agents) {
 function commandHelp() {
   console.log(
     [
-      'dsh-god-view - minimal repo-local board for parallel agents',
+      'godview - minimal repo-local board for parallel agents',
       '',
       'Usage:',
-      '  dsh-god-view join   [--name NAME] [--id ID] [--focus TEXT] [--role ROLE]',
-      '  dsh-god-view status --id ID [--status active|idle|blocked|done] [--focus TEXT] [--plan TEXT]',
-      '  dsh-god-view leave  --id ID',
-      '  dsh-god-view list   [--json] [--stale]',
-      '  dsh-god-view claim  --id ID --paths FILE [--paths FILE2] [--mode edit|review] [--reason TEXT]',
-      '  dsh-god-view release --id ID --paths FILE [--force]',
-      '  dsh-god-view claims [--json]',
-      '  dsh-god-view changes [--json] [--limit N]',
+      '  godview join   [--name NAME] [--id ID] [--focus TEXT] [--role ROLE]',
+      '  godview status --id ID [--status active|idle|blocked|done] [--focus TEXT] [--plan TEXT]',
+      '  godview leave  --id ID',
+      '  godview list   [--json] [--stale]',
+      '  godview claim  --id ID --paths FILE [--paths FILE2] [--mode edit|review] [--reason TEXT]',
+      '  godview release --id ID --paths FILE [--force]',
+      '  godview claims [--json]',
+      '  godview changes [--json] [--limit N]',
       '',
       'Global: --repo DIR (defaults cwd) or DSH_PARALLEL_REPO. Agent id: --id or DSH_PARALLEL_AGENT_ID.',
       'Presence is a one-line focus. Claims are leases; changes keep a claim/release timeline.',

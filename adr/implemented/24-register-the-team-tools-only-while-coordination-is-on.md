@@ -5,7 +5,7 @@ description: Read when changing what a dormant host registers, or how the coordi
 raised-by: human
 decided-by: human
 created: 2026-11-01
-paths: [lib/index.js, test/host-smoke.mjs, docs/protocol.md, AGENTS.md, README.md, README.en.md]
+paths: [packages/dsh-god-view/lib/index.js, packages/dsh-god-view/test/host-smoke.mjs, docs/protocol.md, AGENTS.md, README.md, README.en.md]
 ---
 
 # ADR: 24 Register the team tools only while coordination is on

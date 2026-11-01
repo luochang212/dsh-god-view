@@ -5,7 +5,7 @@ description: Read when changing what counts as an active project, how recency is
 raised-by: human
 decided-by: human
 created: 2026-10-31
-paths: [lib/store.js, lib/index.js, lib/client.js, test/store.test.mjs, test/client-locale.test.mjs, docs/protocol.md, README.md, README.en.md]
+paths: [packages/godview/lib/store.js, packages/dsh-god-view/lib/index.js, packages/dsh-god-view/lib/client.js, packages/godview/test/store.test.mjs, packages/dsh-god-view/test/client-locale.test.mjs, docs/protocol.md, README.md, README.en.md]
 ---
 
 # ADR: 16 Define active as recent work, not host liveness

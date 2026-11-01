@@ -5,7 +5,7 @@ description: Read when changing the panel's coordination-off presentation, the t
 raised-by: human
 decided-by: human
 created: 2026-10-31
-paths: [lib/client.js, docs/protocol.md]
+paths: [packages/dsh-god-view/lib/client.js, docs/protocol.md]
 ---
 
 # ADR: 18 Drop the coordination-off banner

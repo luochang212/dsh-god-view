@@ -1,0 +1,43 @@
+{
+  "name": "godview",
+  "version": "0.1.0",
+  "description": "Generic core for the God's Eye parallel-agent board: presence, file leases, and a claim/release timeline.",
+  "type": "module",
+  "main": "./lib/store.js",
+  "exports": {
+    ".": "./lib/store.js",
+    "./store": "./lib/store.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "godview": "./bin/godview.mjs"
+  },
+  "files": [
+    "lib/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "multi-agent",
+    "file-lease",
+    "coordination",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luochang212/dsh-god-view.git",
+    "directory": "packages/godview"
+  },
+  "bugs": {
+    "url": "https://github.com/luochang212/dsh-god-view/issues"
+  },
+  "homepage": "https://github.com/luochang212/dsh-god-view#readme"
+}

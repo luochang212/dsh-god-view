@@ -1,0 +1,73 @@
+{
+  "name": "dsh-god-view",
+  "version": "0.1.0",
+  "description": "Give your agents a god's eye view: file leases, claim and release records, and a Gantt of who holds what, so parallel agents stop overwriting each other. A DSH plugin, on by default, one switch turns it off.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "files": [
+    "lib/",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.0 <0.3.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "host:smoke": "node test/host-smoke.mjs",
+    "ui:flow": "node test/ui-flow.cjs",
+    "ui:lang": "node test/ui-lang.cjs",
+    "ui:shot": "node test/ui-shot.cjs"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "multi-agent",
+    "coordination",
+    "file-lease",
+    "godview"
+  ],
+  "icon": "./icon.svg",
+  "license": "MIT",
+  "dependencies": {
+    "godview": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luochang212/dsh-god-view.git",
+    "directory": "packages/dsh-god-view"
+  },
+  "homepage": "https://github.com/luochang212/dsh-god-view#readme",
+  "bugs": {
+    "url": "https://github.com/luochang212/dsh-god-view/issues"
+  }
+}

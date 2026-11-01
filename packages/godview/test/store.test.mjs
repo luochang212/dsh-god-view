@@ -4,7 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as S from '../lib/store.js';
+
+const STORE_URL = pathToFileURL(fileURLToPath(new URL('../lib/store.js', import.meta.url))).href;
+const CLI_PATH = fileURLToPath(new URL('../bin/godview.mjs', import.meta.url));
 
 function repo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pt-store-'));
@@ -145,7 +149,7 @@ test('concurrent processes create agents and claims without corruption', async (
   const root = repo();
   S.createAgent(root, { id: 'hub', name: 'Hub' });
   const worker = path.join(root, 'worker.mjs');
-  const storeUrl = 'file://' + path.resolve('lib/store.js');
+  const storeUrl = STORE_URL;
   fs.writeFileSync(
     worker,
     [
@@ -192,7 +196,7 @@ test('concurrent processes create agents and claims without corruption', async (
 
 test('CLI claim conflict and release timeline', () => {
   const root = repo();
-  const cli = path.resolve('bin/dsh-god-view.mjs');
+  const cli = CLI_PATH;
   const a = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'a'], { encoding: 'utf8' });
   const b = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'b'], { encoding: 'utf8' });
   const aid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(a.stdout)[1].trim();
@@ -226,7 +230,7 @@ test('CLI claim conflict and release timeline', () => {
 
 test('CLI list hides stale agents unless --stale is passed', () => {
   const root = repo();
-  const cli = path.resolve('bin/dsh-god-view.mjs');
+  const cli = CLI_PATH;
   const join = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'ghost'], { encoding: 'utf8' });
   const id = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(join.stdout)[1].trim();
   // Age the presence past its TTL so it counts as stale.
@@ -245,7 +249,7 @@ test('CLI list hides stale agents unless --stale is passed', () => {
 
 test('CLI status done and leave release owned claims', () => {
   const root = repo();
-  const cli = path.resolve('bin/dsh-god-view.mjs');
+  const cli = CLI_PATH;
   const join = spawnSync(process.execPath, [cli, 'join', '--repo', root, '--name', 'a'], { encoding: 'utf8' });
   const aid = /export DSH_PARALLEL_AGENT_ID=(.+)/.exec(join.stdout)[1].trim();
   assert.equal(
@@ -322,7 +326,7 @@ test('two agents racing for the same expired lease produce exactly one owner', a
   // same moment. The exclusive (wx) create must decide the single owner: the
   // loser sees a conflict and keeps no open change. Before the fix both
   // processes overwrote the lease file and each believed it had claimed.
-  const storeUrl = 'file://' + path.resolve('lib/store.js');
+  const storeUrl = STORE_URL;
   const worker = path.join(root, 'race-worker.mjs');
   fs.writeFileSync(
     worker,

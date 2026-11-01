@@ -13,6 +13,15 @@ test('package declares an installable DSH bundle', () => {
   assert.match(pkg.engines?.dsh || '', /^>=0\.2\.0/);
 });
 
+test('package is the DSH adapter, not the generic core', () => {
+  assert.equal(pkg.main, './lib/index.js');
+  assert.equal(pkg.exports?.['./store'], undefined, 'the store is owned by godview');
+  assert.equal(pkg.bin, undefined, 'the CLI is owned by godview');
+  assert.equal(pkg.dependencies?.godview, '^0.1.0');
+  assert.ok(pkg.files.includes('README.md'));
+  assert.ok(pkg.files.includes('LICENSE'));
+});
+
 test('bundle patch is shipped, targets this package, and has no config-as-code', () => {
   const patch = readFileSync(join(root, 'cordis.patch.yml'), 'utf8');
   assert.match(patch, /id:\s*dsh-god-view/);

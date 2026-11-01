@@ -6,7 +6,7 @@ raised-by: agent
 decided-by: human
 created: 2026-10-31
 commit: "6408670"
-paths: [lib/index.js, lib/store.js, docs/protocol.md, README.md, README.en.md, examples/cordis.patch.yml, test/host-smoke.mjs]
+paths: [packages/dsh-god-view/lib/index.js, packages/godview/lib/store.js, docs/protocol.md, README.md, README.en.md, examples/cordis.patch.yml, packages/dsh-god-view/test/host-smoke.mjs]
 ---
 
 # ADR: 22 Keep exactly one write-guard policy: auto

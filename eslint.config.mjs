@@ -17,12 +17,12 @@ const common = {
 export default [
   {
     ignores: [
-      'node_modules/**',
+      '**/node_modules/**',
       'site/node_modules/**',
       'site/dist/**',
       'site/.astro/**',
       'site/public/decisions/**',
-      'screenshots/**',
+      '**/screenshots/**',
       'adr/**',
       '.dsh/**',
       '.workbuddy/**',
@@ -41,11 +41,11 @@ export default [
     },
   },
   {
-    files: ['lib/client.js'],
+    files: ['**/lib/client.js'],
     languageOptions: { globals: { window: 'readonly', document: 'readonly', navigator: 'readonly' } },
   },
   {
-    files: ['test/*.cjs'],
+    files: ['**/test/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {

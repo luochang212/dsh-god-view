@@ -5,7 +5,7 @@ description: Read when changing the panel topbar, the coordination switch, or th
 raised-by: human
 decided-by: human
 created: 2026-10-31
-paths: [lib/client.js]
+paths: [packages/dsh-god-view/lib/client.js]
 ---
 
 # ADR: 13 Let the topbar carry only the coordination switch

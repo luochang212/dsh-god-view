@@ -6,20 +6,20 @@
  *  - short file leases with a write guard;
  *  - a claim/release timeline that keeps who changed what and when.
  *
- * The browser half is ./client.js. The shared file format is ./store.js and is
- * also used by bin/dsh-god-view.mjs.
+ * The browser half is ./client.js. The shared file format lives in the
+ * godview package and is also used by its CLI.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { fileURLToPath } from 'node:url';
-import * as S from './store.js';
+import { createRequire } from 'node:module';
+import * as S from 'godview';
 
 export const name = 'dsh-god-view';
 export const inject = ['tools'];
 
-const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const CLI_PATH = path.join(PACKAGE_ROOT, 'bin', 'dsh-god-view.mjs');
+const require = createRequire(import.meta.url);
+const CLI_PATH = path.join(path.dirname(require.resolve('godview/package.json')), 'bin', 'godview.mjs');
 // Fixed HTTP prefix. It is deliberately not configurable: the browser half
 // (lib/client.js) hardcodes the same path, so a custom route here would serve
 // an API the panel never calls. Keep the two constants in sync.

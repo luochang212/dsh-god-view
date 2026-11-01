@@ -5,7 +5,7 @@ description: Read when changing claim history, release/expiry state, or the occu
 raised-by: agent
 decided-by: human
 created: 2026-10-30
-paths: [lib/store.js, lib/client.js]
+paths: [packages/godview/lib/store.js, packages/dsh-god-view/lib/client.js]
 ---
 
 # ADR: 3 Model occupancy as a claim/release timeline rendered as a per-file Gantt

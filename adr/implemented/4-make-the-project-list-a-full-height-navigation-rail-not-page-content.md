@@ -5,7 +5,7 @@ description: Read when changing the project switcher, panel layout, or the relat
 raised-by: human
 decided-by: human
 created: 2026-10-30
-paths: [lib/client.js]
+paths: [packages/dsh-god-view/lib/client.js]
 ---
 
 # ADR: 4 Make the project list a full-height navigation rail, not page content

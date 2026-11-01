@@ -5,7 +5,7 @@ description: Read when changing which projects the rail lists, how an idle or em
 raised-by: human
 decided-by: human
 created: 2026-10-31
-paths: [lib/client.js, test/client-locale.test.mjs, test/ui-flow.cjs]
+paths: [packages/dsh-god-view/lib/client.js, packages/dsh-god-view/test/client-locale.test.mjs, packages/dsh-god-view/test/ui-flow.cjs]
 ---
 
 # ADR: 11 List active projects only, and give an empty board one quiet blank page

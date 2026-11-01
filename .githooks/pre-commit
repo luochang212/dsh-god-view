@@ -1,8 +1,4 @@
 #!/bin/sh
 set -e
 
-npm run format:check
-npm run lint
-node --test test/store.test.mjs
-node test/host-smoke.mjs
-npm run adr:validate
+npm run check

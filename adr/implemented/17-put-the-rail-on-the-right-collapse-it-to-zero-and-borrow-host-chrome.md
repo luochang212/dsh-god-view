@@ -5,7 +5,7 @@ description: Read when changing the rail's side, width, collapse behaviour, the 
 raised-by: human
 decided-by: human
 created: 2026-10-31
-paths: [lib/client.js, test/ui-flow.cjs, test/client-locale.test.mjs]
+paths: [packages/dsh-god-view/lib/client.js, packages/dsh-god-view/test/ui-flow.cjs, packages/dsh-god-view/test/client-locale.test.mjs]
 ---
 
 # ADR: 17 Put the project rail on the right, collapse it to zero, and borrow the host's chrome

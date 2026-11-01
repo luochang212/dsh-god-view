@@ -4,7 +4,7 @@
 node_modules/
 *.log
 
-screenshots/local/
+screenshots/
 .workbuddy/
 
 site/node_modules/

@@ -33,7 +33,7 @@ A board is always repository-local. The index only lists roots; it never merges 
   "role": "agent",
   "status": "active | idle | blocked | done",
   "focus": "one line about the current work",
-  "lastAction": "edit lib/store.js",
+  "lastAction": "edit packages/godview/lib/store.js",
   "plan": "",
   "files": [],
   "branch": null,
@@ -58,7 +58,7 @@ Claim file:
 
 ```json
 {
-  "path": "lib/store.js",
+  "path": "packages/godview/lib/store.js",
   "agent": "dsh-demo-agent",
   "agentName": "parallel builder",
   "changeId": "ch-mvtntlri-ebc66424",
@@ -87,7 +87,7 @@ Change file:
   "sessionId": "session-demo-0001",
   "sessionTitle": "DSH 多 agent 协作插件设计",
   "intent": "timeline: claim/release observability",
-  "paths": ["lib/client.js", "lib/store.js"],
+  "paths": ["packages/dsh-god-view/lib/client.js", "packages/godview/lib/store.js"],
   "state": "claimed | done | expired",
   "summary": "turn ended | released | lease expired",
   "createdAt": 1793280396000,
@@ -99,7 +99,7 @@ Change file:
       "at": 1793280396000,
       "agent": "dsh-demo-agent",
       "agentName": "parallel builder",
-      "path": "lib/client.js",
+      "path": "packages/dsh-god-view/lib/client.js",
       "intent": "timeline: claim/release observability"
     },
     {
@@ -107,7 +107,7 @@ Change file:
       "at": 1793280399000,
       "agent": "dsh-demo-agent",
       "agentName": "parallel builder",
-      "path": "lib/client.js",
+      "path": "packages/dsh-god-view/lib/client.js",
       "summary": "turn ended"
     }
   ]

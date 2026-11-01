@@ -5,7 +5,7 @@ description: Read before adding any message, inbox, question, reply, or human-in
 raised-by: human
 decided-by: human
 created: 2026-10-30
-paths: [lib/store.js, lib/index.js, lib/client.js, bin/dsh-god-view.mjs]
+paths: [packages/godview/lib/store.js, packages/dsh-god-view/lib/index.js, packages/dsh-god-view/lib/client.js, packages/godview/bin/godview.mjs]
 ---
 
 # ADR: 2 Drop inter-agent messages; keep focus, claims, and timeline

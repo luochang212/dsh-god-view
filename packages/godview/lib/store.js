@@ -1,5 +1,5 @@
 /**
- * dsh-god-view shared store.
+ * godview shared store.
  *
  * Three concepts only:
  *   - presence: who is active and their one-line focus;
@@ -166,7 +166,7 @@ const STORE_README = [
   '# Parallel team board',
   '',
   'Shared coordination state for agents working in the same repository.',
-  'It is created automatically by dsh-god-view and ignored by git.',
+  'It is created automatically by godview and ignored by git.',
   '',
   'Layout:',
   '- agents/<id>.json    presence, one-line focus, heartbeat',

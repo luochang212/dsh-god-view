@@ -5,7 +5,7 @@ description: Read when changing the change/claim schema, session attribution, in
 raised-by: human
 decided-by: human
 created: 2026-10-30
-paths: [lib/store.js, lib/index.js, lib/client.js]
+paths: [packages/godview/lib/store.js, packages/dsh-god-view/lib/index.js, packages/dsh-god-view/lib/client.js]
 ---
 
 # ADR: 6 Record conversation identity, intent, paths, and release state on every change
