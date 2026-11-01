@@ -24,7 +24,7 @@
 - 哪个文件正被谁占用（file lease）；
 - 什么时候占用、什么时候释放、被谁占用（claim/release timeline）。
 
-仓库是 npm workspaces：`packages/godview` 是通用核心（store、CLI、协议），`packages/dsh-god-view` 是 DSH 适配层（host、client、bundle）。
+仓库是 npm workspaces：`packages/godview` 是通用核心（store、CLI、协议），`packages/dsh-god-view` 是 DSH 适配层（host、client、bundle），`packages/pi-god-view` 是 Pi coding agent 的原生 TUI 适配层。
 
 ## 🔌 默认开启，随时可以关掉
 
@@ -162,6 +162,18 @@ ln -sfn /absolute/path/to/dsh-god-view/packages/dsh-god-view "$PROFILE/node_modu
 
 如果已经用 bundle 安装，不要再加这条手写行。
 
+## 🥧 Pi coding agent
+
+同一套 board 也有 Pi 适配器 `packages/pi-god-view`：复用 `godview` 的 store 和 `.dsh/parallel/`，在 Pi TUI 里提供三个 `team_*` 工具、write/edit 前置 guard，以及 `/godview` 只读面板。没有浏览器面板，也不依赖 DSH 或 Cordis。
+
+本地试用：
+
+```sh
+pi -e /absolute/path/to/dsh-god-view/packages/pi-god-view
+```
+
+Pi 与 DSH 可以同时查看同一仓库的 board。安装、工具语义和边界见 [packages/pi-god-view/README.md](packages/pi-god-view/README.md)。
+
 ## 🧰 工具与 CLI
 
 协作开启时，模型的工具表里只有这三个工具（关闭后整张撤下）：
@@ -213,7 +225,7 @@ godview leave --id <id>
 关键取舍用 [adr-kit](https://github.com/luochang212/adr-kit) 记录在 [adr/](adr/README.md)。记录会继续增加，所以这里只留决定产品形状的几条；完整清单和每条的理由用 `adrkit list` 查看。
 
 - 每个仓库一块 board，全局索引只做发现和汇总，不合并 claim，也不加跨项目锁（ADR 1）。
-- 发布拆成 `godview`（通用 store/CLI）和 `dsh-god-view`（DSH 适配层）两个 npm 包，放在同一个 workspace；两条版本线由 changesets 固定同步（ADR 25）。
+- 发布拆成 `godview`（通用 store/CLI）、`dsh-god-view`（DSH 适配层）和 `pi-god-view`（Pi TUI 适配层）三个 npm 包，放在同一个 workspace；三条版本线由 changesets 固定同步（ADR 25、ADR 26）。
 - 没有消息、收件箱或待回复；focus 是会话属性，面板除了协作开关只读（ADR 2、5）。
 - 占用是 claim/release 时间轴，按文件渲染成甘特图；甘特图是唯一的时间轴界面（ADR 3、14）。
 - 协作默认开启，由人从顶栏关掉；关闭时不写任何 board 状态（ADR 20，取代 ADR 9 的默认值）。

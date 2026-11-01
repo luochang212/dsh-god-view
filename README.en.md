@@ -24,7 +24,7 @@ It is not a chat tool and not a human control panel. It is a read-only coordinat
 - which file is currently held, and by whom (a file lease);
 - when it was claimed, when it was released, and by whom (a claim/release timeline).
 
-The repository is an npm workspace: `packages/godview` is the generic core (store, CLI, protocol); `packages/dsh-god-view` is the DSH adapter (host, client, bundle).
+The repository is an npm workspace: `packages/godview` is the generic core (store, CLI, protocol); `packages/dsh-god-view` is the DSH adapter (host, client, bundle); `packages/pi-god-view` is the native TUI adapter for the Pi coding agent.
 
 ## 🔌 On by default, off whenever you want
 
@@ -162,6 +162,18 @@ ln -sfn /absolute/path/to/dsh-god-view/packages/dsh-god-view "$PROFILE/node_modu
 
 Do not add this row when the bundle is already installed.
 
+## 🥧 Pi coding agent
+
+The same board also has a Pi adapter in `packages/pi-god-view`: it reuses the `godview` store and `.dsh/parallel/`, and provides three `team_*` tools, a write/edit guard, and a read-only `/godview` TUI panel. It has no browser panel and no DSH or Cordis dependency.
+
+Try it from source:
+
+```sh
+pi -e /absolute/path/to/dsh-god-view/packages/pi-god-view
+```
+
+Pi and DSH can inspect the same repository board at the same time. See [packages/pi-god-view/README.en.md](packages/pi-god-view/README.en.md) for install, tool semantics, and boundaries.
+
 ## 🧰 Tools and CLI
 
 While coordination is on, the model's catalog carries exactly these three tools (the switch takes them all out):
@@ -213,7 +225,7 @@ It stores root / name / lastSeenAt only. Presence, claims, and timelines always 
 Key choices are recorded with [adr-kit](https://github.com/luochang212/adr-kit) under [adr/](adr/README.md). Records keep accruing, so this section keeps only the choices that shape the product; run `adrkit list` for the full set and each record's reasoning.
 
 - one board per repository; the global index only discovers and summarizes, never merges claims, and adds no cross-project lock (ADR 1).
-- the release is split into `godview` (generic store/CLI) and `dsh-god-view` (DSH adapter) in one npm workspace; changesets keeps the two versions in a fixed group (ADR 25).
+- the release is split into `godview` (generic store/CLI), `dsh-god-view` (DSH adapter), and `pi-god-view` (Pi TUI adapter) in one npm workspace; changesets keeps the three versions in a fixed group (ADR 25, ADR 26).
 - no messages, inbox, or reply state; focus is a session property, and the panel is read-only apart from the coordination switch (ADR 2, 5).
 - occupancy is a claim/release timeline rendered as a per-file Gantt; the Gantt is the only timeline surface (ADR 3, 14).
 - coordination is on by default and a human turns it off from the topbar; off writes no board state (ADR 20, which supersedes ADR 9's default).

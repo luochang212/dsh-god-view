@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["godview", "dsh-god-view"]],
+  "fixed": [["godview", "dsh-god-view", "pi-god-view"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

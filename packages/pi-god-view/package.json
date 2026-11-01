@@ -1,0 +1,47 @@
+{
+  "name": "pi-god-view",
+  "version": "0.1.0",
+  "description": "Native Pi coding-agent extension for the godview parallel-agent board.",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "coding-agent",
+    "multi-agent",
+    "parallel-agents",
+    "file-lease",
+    "coordination",
+    "godview"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luochang212/dsh-god-view.git",
+    "directory": "packages/pi-god-view"
+  },
+  "homepage": "https://github.com/luochang212/dsh-god-view/tree/main/packages/pi-god-view#readme",
+  "bugs": {
+    "url": "https://github.com/luochang212/dsh-god-view/issues"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/pi-god-view.js"
+    ]
+  },
+  "files": [
+    "extensions/",
+    "lib/",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "godview": "^0.1.0"
+  }
+}

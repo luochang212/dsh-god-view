@@ -21,6 +21,10 @@ The global recent-project index is separate:
 
 A board is always repository-local. The index only lists roots; it never merges claims or history.
 
+## Hosts
+
+The file format is host-neutral. `dsh-god-view` and `pi-god-view` read and write the same board files, so a Pi session and a DSH session in one repository see each other. Agent IDs are opaque: DSH uses `dsh-<hash>`, Pi uses `pi-<hash>`. The DSH coordination switch governs the DSH host only; the Pi extension writes presence and leases while it is installed. Presence, claim, change, and registry shapes are otherwise identical.
+
 ## Presence: agents/<id>.json
 
 ```json
@@ -137,7 +141,7 @@ Coordination is on by default. The switch is a single global file in the registr
 - Turning it off releases the automatic leases this host holds; recorded history stays readable but frozen. Exclusive leases owned by other processes are left to expire. Turning it back on backfills presence for tracked sessions and re-registers the tools.
 - A host notices a flip made by another process (or by another machine sharing the registry) on its next coordination check: its heartbeat, a write/edit, a team tool call, or `GET /coordination`. The tool catalog follows within one heartbeat, and the panel POST is immediate.
 - The switch never flips itself. A host that sees several sessions while off keeps that count internally and does not warn in the panel (ADR 18).
-- The switch governs the DSH host. The CLI writes the same board files directly and does not consult the switch, so a claim made through the CLI is visible to every host even while the switch is off.
+- The switch governs the DSH host. The CLI writes the same board files directly and does not consult the switch, so a claim made through the CLI is visible to every host even while the switch is off. The Pi adapter does not read this switch; it coordinates while the extension is installed.
 
 ## Write guard
 

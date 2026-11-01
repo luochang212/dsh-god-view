@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "npm run test -w godview && npm run test -w dsh-god-view",
+    "test": "npm run test -w godview && npm run test -w dsh-god-view && npm run test -w pi-god-view",
     "host:smoke": "npm run host:smoke -w dsh-god-view",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
