@@ -10,7 +10,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "godview": "./bin/godview.mjs"
+    "godview": "bin/godview.mjs"
   },
   "files": [
     "lib/",

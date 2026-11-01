@@ -63,7 +63,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/luochang212/dsh-god-view.git",
+    "url": "git+https://github.com/luochang212/dsh-god-view.git",
     "directory": "packages/dsh-god-view"
   },
   "homepage": "https://github.com/luochang212/dsh-god-view#readme",
